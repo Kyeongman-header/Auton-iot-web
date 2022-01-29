@@ -1,56 +1,240 @@
 import Graph from './Graph';
 import type {CardProperty} from '../Types/TypesCardProperty';
-import { ListOfWhatToShowProperty } from '../Types/TypesWhatToShowProperty';
-import React from 'react';
-import {UserIcon, InformationCircleIcon, ChipIcon, TruckIcon} from '@heroicons/react/outline';
+import { indextowords, ListOfWhatToShowProperty, WhatToShowProperty } from '../Types/TypesWhatToShowProperty';
+import React,{useRef, useEffect,useState} from 'react';
+import {UserIcon, InformationCircleIcon, ChipIcon, TruckIcon, MapIcon, PresentationChartBarIcon as OutlinePresentationChartBarIcon, MinusCircleIcon, DocumentDownloadIcon, CalendarIcon} from '@heroicons/react/outline';
+import {MapIcon as SolidMapIcon,PresentationChartBarIcon as SolidPresentationChartBarIcon, MinusCircleIcon as MinusCircleIconsolid, DocumentDownloadIcon as SolidDocumentDownloadIcon ,CalendarIcon as SolidCalendarIcon} from '@heroicons/react/solid'
+import type { MutableRefObject,MouseEventHandler } from 'react';
+import type {datesandvalue, Machine} from '../Types/TypesMachine';
+import type { GraphProperty } from '../Types/TypesGraphProperty';
+import { useRouter } from 'next/router'
+import xlsx from 'xlsx';
 
 export interface CardsProperty{
-    cardproperty : CardProperty,
+    Machine: Machine,
+    WhatToShowProperty: WhatToShowProperty,
     handlewhattoshowproperty : (index : string)=>void,
+    buttonsrefs : MutableRefObject<HTMLDivElement[]>,
+    handlemachinesselected : (selectids : string[], y:boolean) =>void,
+    pub_date : string[],
 }
 
 
 
-export default function Cards ({cardproperty,handlewhattoshowproperty} :CardsProperty) {
+export default function Cards ({Machine,WhatToShowProperty,handlewhattoshowproperty, buttonsrefs,handlemachinesselected,pub_date} :CardsProperty) {
+
+    // const refs=useRef<HTMLDivElement[]>([]);
+    // function sleep(ms : number) {
+    //     return new Promise((r) => setTimeout(r, ms));
+    //   }
+    //임시로 자기 자신 누를때만 fade in, fade out이 작동하게 하였음.
+    //-------------------------------------
+    let graphproperty: datesandvalue[] = Machine.drawable.slice();
+    for (let whattoshowproperty of ListOfWhatToShowProperty)
+    {   
+        
+        if(!WhatToShowProperty[whattoshowproperty])
+        {
+         
+            graphproperty=graphproperty.filter(drawable => drawable.name!==whattoshowproperty);
+            //whattoshowproperty 배열에서 false인 놈들을 하나씩 삭제시켜 준다.
+
+        }
+    }
+    const zip= (rows:[string[],number[]]) => (rows[0].map((_,c)=>rows.map(row=>row[c])));
+    const zip_2= (rows:[string[],string[]]) => (rows[0].map((_,c)=>rows.map(row=>row[c])));
+    
+
+    const router = useRouter()
+    const [mapiconmouseon, setmapiconmouseon]=useState<boolean>(false);
+    const [graphiconmouseon,setgraphiconmouseon] =useState<boolean>(false);
+    const [minusiconmouseon,setminusiconmouseon] =useState<boolean>(false);
+    const [downloadiconmouseon,setdownloadiconmouseon] =useState<boolean>(false);
+    const [calendariconmouseon,setcalendariconmouseon] =useState<boolean>(false);
+    const [map,setmap]=useState<boolean>(false);
     return (
-      <div className="grid grid-rows-6 grid-cols-10 h-screen border-y">
+      <div className="grow grid grid-rows-6 grid-cols-10 h-screen border-y animate-fade-in-down duration-300 ">
         <div className="row-start-1 row-end-7 col-start-1 col-end-3"></div>
         <div className="row-start-1 row-end-2 col-start-3 col-end-9 grid">
           <div className="self-stretch grid grid-rows-3 justify-items-stretch items-center">
-            <h1 className="row-start-1 row-end-3 text-justify whitespace-pre text-xl font-bold">
-              {"차량 Iot 모듈 정보 "}
-            </h1>
-            <div className="row-start-3 row-end-4 flex flex-row flex-wrap justify-items-start items-center">
-              {cardproperty.Machine.user && (
-                <>
-                  <UserIcon className="h-5 w-5" />
-                  <p className="ml-1 text-base mr-1">{cardproperty.Machine.user}</p>
-                </>
-              )}
+            <div className="row-start-1 row-end-3  flex justify-between">
+              <div
+                title="현재 목록에서 삭제"
+                className="w-fit h-5 self-center cursor-pointer flex duration-300 hover:scale-110"
+                onClick={() => {
+                  handlemachinesselected([Machine.id], false);
+                }}
+                onMouseOver={() => {
+                  setminusiconmouseon(true);
+                }}
+                onMouseLeave={() => {
+                  setminusiconmouseon(false);
+                }}
+              >
+                {!minusiconmouseon ? (
+                  <MinusCircleIcon className="w-5 h-5 self-center" />
+                ) : (
+                  <MinusCircleIconsolid className="w-5 h-5 self-center" />
+                )}
+                <h1 className="text-justify whitespace-pre text-xl font-bold self-center">
+                  {map
+                    ? "  차량 Iot 모듈 gps 정보"
+                    : "  차량 Iot 모듈 공기질 그래프"}
+                </h1>
+              </div>
+              <div
+                title={
+                  map
+                    ? "데이터 차트로 보기"
+                    : "내가 다닌 미세먼지 road map 보기"
+                }
+                onMouseOver={() => {
+                  setmapiconmouseon(true);
+                  setgraphiconmouseon(true);
+                }}
+                onMouseLeave={() => {
+                  setmapiconmouseon(false);
+                  setgraphiconmouseon(false);
+                }}
+                onClick={() => {
+                  setmap(!map);
+                }}
+                className="w-10 h-10 cursor-pointer duration-300 hover:scale-110"
+              >
+                {!map ? (
+                  !mapiconmouseon ? (
+                    <MapIcon className="w-10 h-10 " />
+                  ) : (
+                    <SolidMapIcon className="w-10 h-10" />
+                  )
+                ) : !graphiconmouseon ? (
+                  <OutlinePresentationChartBarIcon className="w-10 h-10 " />
+                ) : (
+                  <SolidPresentationChartBarIcon className="w-10 h-10" />
+                )}
+              </div>
+            </div>
+            <div className="row-start-3 row-end-4 flex flex-row flex-wrap justify-between items-center">
+              <div className="flex flex-row justify-items-start">
+                {Machine.user && (
+                  <>
+                    <UserIcon className="h-5 w-5" />
+                    <p className="ml-1 text-base mr-1">{Machine.user}</p>
+                  </>
+                )}
 
-              <TruckIcon className="h-5 w-5" />
-              <p className="ml-1 text-base">{cardproperty.Machine.car_number}</p>
-              <ChipIcon className="ml-1 text-base h-5 w-5" />
-              <p className="ml-1 text-base">{cardproperty.Machine.id}</p>
+                {Machine.car_number && (
+                  <>
+                    <TruckIcon className="h-5 w-5" />
+                    <p className="ml-1 text-base">{Machine.car_number}</p>
+                  </>
+                )}
+                <ChipIcon className="ml-1 text-base h-5 w-5" />
+                <p className="ml-1 text-base">{Machine.id}</p>
+              </div>
+              <div className="flex">
+                <div
+                  title="날짜 선택하기"
+                  className="h-5 w-5 mr-3 duration-300 hover:scale-125 cursor-pointer"
+                  onMouseOver={() => {
+                    setcalendariconmouseon(true);
+                  }}
+                  onMouseLeave={() => {
+                    setcalendariconmouseon(false);
+                  }}
+                >
+                  {!calendariconmouseon ? (
+                    <CalendarIcon className="w-fit h-fit" />
+                  ) : (
+                    <SolidCalendarIcon className="w-fit h-fit" />
+                  )}
+                </div>
+                <div
+                  title="엑셀(.xlsx) 파일 다운로드"
+                  className="h-5 w-5 duration-300 hover:scale-125 cursor-pointer"
+                  onMouseOver={() => {
+                    setdownloadiconmouseon(true);
+                  }}
+                  onMouseLeave={() => {
+                    setdownloadiconmouseon(false);
+                  }}
+                  onClick={() => {
+                    const wb = xlsx.utils.book_new();
+
+                    let arrofarr: [string[], string[]] = [
+                      Machine.gps_dates,
+                      Machine.gps,
+                    ];
+                    const newarrofarr = zip_2(arrofarr);
+                    var ws = xlsx.utils.aoa_to_sheet(newarrofarr);
+                    xlsx.utils.book_append_sheet(wb, ws, "gps");
+
+                    Machine.drawable.map((draw, index) => {
+                      let name = indextowords(draw.name);
+                      let arrofarr: [string[], number[]] = [
+                        draw.dates,
+                        draw.values,
+                      ];
+                      const newarrofarr = zip(arrofarr);
+                      var ws = xlsx.utils.aoa_to_sheet(newarrofarr);
+                      xlsx.utils.book_append_sheet(wb, ws, name);
+                    });
+
+                    xlsx.writeFile(
+                      wb,
+                      Machine.id +
+                        "_" +
+                        pub_date[0] +
+                        "_" +
+                        pub_date[1] +
+                        ".xlsx"
+                    );
+                  }}
+                >
+                  {downloadiconmouseon ? (
+                    <SolidDocumentDownloadIcon className="h-fit w-fit duration-300" />
+                  ) : (
+                    <DocumentDownloadIcon className="h-fit w-fit duration-300" />
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        {/* 여기서 graph로 넘길 machine의 데이터와 안 넘길 데이터를 WhatToShowProperty를 이용해서 분류해서 넘긴다. */}
-        <Graph graphproperty={cardproperty.GraphProperty} />
-        <div className="row-start-6 row-end-7 col-start-3 col-end-9 flex flex-wrap flex-row justify-start content-center items-center">
+        <Graph
+          datesandvalue={graphproperty}
+          ismap={map}
+          gps={Machine.gps}
+          gps_date={Machine.gps_dates}
+        />
+        <div className="row-start-6 row-end-7 col-start-2 col-end-10 flex flex-wrap flex-row justify-start content-center items-center">
           {ListOfWhatToShowProperty.map(
-            (whattoshowproperty: string, index: number) =>
-              cardproperty.WhatToShowProperty[whattoshowproperty] && (
-                <div
-                  key={index}
-                  className="bg-green-700 mt-2 ml-1 rounded-lg w-fit h-fit cursor-pointer text-center leading-loose md:text-lg sm:text-base text-white whitespace-pre animate-fade-in-down duration-150 hover:scale-105 hover:opacity-60"
-                  onClick={() => {
-                    handlewhattoshowproperty(whattoshowproperty);
-                  }}
-                >
-                  {"    " + whattoshowproperty + "    "}
-                </div>
-              )
+            (whattoshowproperty: string, index: number) => {
+              return (
+                WhatToShowProperty[whattoshowproperty] && (
+                  <div
+                    title="클릭하여 지우기"
+                    key={index}
+                    ref={(el) =>
+                      ((buttonsrefs.current as HTMLDivElement[])[index] =
+                        el as HTMLDivElement)
+                    }
+                    className="animate-fade-in-down bg-green-700 mt-2 ml-1 rounded-lg w-fit h-fit cursor-pointer text-center leading-loose text-sm text-white whitespace-pre hover:scale-105 hover:opacity-60 "
+                    onClick={async () => {
+                      // refs.current[index]?.classList.remove('animate-fade-in-down')
+                      // refs.current[index]?.classList.add('opacity-100')
+                      // refs.current[index]?.classList.add('animate-fade-out-down')
+                      // await sleep(300);
+                      // refs.current[index]?.classListx.remove('animate-fade-out-down')
+                      //아까는 분명 됬었는데 지금은 또 안되네...
+                      handlewhattoshowproperty(whattoshowproperty);
+                    }}
+                  >
+                    {"    " + indextowords(whattoshowproperty) + "    "}
+                  </div>
+                )
+              );
+            }
           )}
         </div>
         <div className="row-start-1 row-end-7 col-start-9 col-end-11"></div>

@@ -1,4 +1,4 @@
-import type { NextPage } from 'next';
+import type { GetStaticProps, InferGetStaticPropsType, NextPage, NextPageContext } from 'next';
 //next routing을 위함.
 
 
@@ -8,8 +8,8 @@ import { RootState } from '../redux/store';
 import { useSelector, useDispatch } from 'react-redux';
 // redux의 사용을 위한 훅.
 
-import { addmachine, togglemachineselected,settruemachinesearched,setfalsemachinesearched } from '../redux/machine_slices';
-import { settoken } from '../redux/token_slices';
+import { togglemachineselected,settruemachinesearched,setfalsemachinesearched,  getmachinelists_fromapiserver, deletesample } from '../redux/machine_slices';
+//import { settoken } from '../redux/token_slices';
 // redux actions.
 //onClick={() => dispatch(addmachine("Test"))} 사용법 참고.
 
@@ -25,24 +25,28 @@ import BigSearchBar from '../components/RightSideBar/BigSearchBar';
 
 import InfinityScrollCards from '../components/Center/InfinityScrollCards';
 
-import type {Machine} from '../components/Types/TypesMachine';
+import type {datesandvalue, Machine} from '../components/Types/TypesMachine';
 import type { CardProperty } from '../components/Types/TypesCardProperty';
 import type { GraphProperty } from '../components/Types/TypesGraphProperty';
-import type { WhatToShowProperty } from '../components/Types/TypesWhatToShowProperty';
+import { LengthOfListOfWhatToShowProperty, sample_whattoshowproperty, WhatToShowProperty } from '../components/Types/TypesWhatToShowProperty';
 import { ListOfWhatToShowProperty } from '../components/Types/TypesWhatToShowProperty';
 
-const Home: NextPage = (props) => {
-  // const [machines,setmachines] : Machine[] =[{id : "41", car_number : "12하 1234"},{id : "42", car_number : "12하 1212", user : "sky@naver.com"},{id : "43", car_number : "12하 1255"}];
+import addDays from '../components/addDays';
+import { AppContext } from 'next/app';
+import _ from 'lodash';
 
-  const machines = useSelector((state: RootState) => state.machines.Machines);
-  const token = useSelector((state: RootState) => state.token.token);
-  const dispatch = useDispatch();
+const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsType<typeof getStaticProps>) => {
+  // const [machines,setmachines] : Machine[] =[{id : "41", car_number : "12하 1234"},{id : "42", car_number : "12하 1212", user : "sky@naver.com"},{id : "43", car_number : "12하 1255"}];
+  
+  //const machines = useSelector((state: RootState) => state.machines.Machines);
+  //const token = useSelector((state: RootState) => state.token.token);
 
   //왼쪽 사이드바와 오른쪽 사이드바의 확장 state.
   const [ExpandLeftSideBar, setExpandLeftSideBar] =
     useState<boolean>(false);
   const [ExpandRightSideBar, setExpandRightSideBar] =
     useState<boolean>(false);
+  const [machines, setmachines]=useState<Machine[]>(machine_list);
 
 
     const refleft = useRef<HTMLDivElement>(null);
@@ -52,116 +56,291 @@ const Home: NextPage = (props) => {
     //결론부터 말하자면 딱 지금처럼 쓰는게 정답이다. 그냥 외우자...
     const handleClickOutsideSideBar = (event : CustomEvent<MouseEvent>) => {
       //주의! e.target을 쓰기 위해선 as HTMLElement를 사용해야 한다.
-      if (refleft.current && refright.current && !refleft.current.contains(event.target as HTMLElement) && !refright.current.contains(event.target as HTMLElement)) {
-          setExpandLeftSideBar(false);
-          setExpandRightSideBar(false);
+      if (
+        refleft.current &&
+        refright.current &&
+        !refleft.current.contains(event.target as HTMLElement) &&
+        !refright.current.contains(event.target as HTMLElement)
+      ) {
+        setExpandLeftSideBar(false);
+        setExpandRightSideBar(false);
       }
   };
+
   //문서 전체에 전역으로 click 이벤트 핸들러를 등록해주고, 그 이벤트 핸들러에서는 ref로 등록한 양쪽 사이드바 밖에서 클릭이 되었는지를 확인한다.
   //만약 양쪽 사이드 바 바깥 쪽에서 클릭이 되었다면 사이드바는 close된다.
-  useEffect(() => {
-    //as EventListener를 주의할 것.
-    document.addEventListener('mousedown', handleClickOutsideSideBar as EventListener);
-    return () => {
-        document.removeEventListener('mousedown', handleClickOutsideSideBar as EventListener);
-    };
-}, [refleft,refright]);
 
 
   //어떤 속성을 그래프에 적용해서 표현할 것인지 state.
   const [whattoshowproperty, setwhattoshowproperty] =
-    useState<WhatToShowProperty>({
-      AverageOrWorst: true,
-      PM25: true,
-      TEMPERATURE: false,
-      HUMIDITY: false,
-      CO2: false,
-      KHAI: false,
-      CO: false,
-      SO2: false,
-      NO2: false,
-      O3: false,
+    useState<WhatToShowProperty>(sample_whattoshowproperty);
+    
+    
+    const today=new Date();
+    const yesterday=addDays(today,-1);
+    const today_yy=today.getFullYear();
+    const today_mm=today.getMonth()+1;
+    const today_dd=today.getDate();
+    const default_pub_date__lte=today_yy+'-'+today_mm+'-'+today_dd;
+
+    const yesterday_yy=yesterday.getFullYear();
+    const yesterday_mm=yesterday.getMonth()+1;
+    const yesterday_dd=yesterday.getDate();
+    const default_pub_date__gte=yesterday_yy+'-'+yesterday_mm+'-'+yesterday_dd;
+
+    //const [pub_date,setpub_date]=useState<string[]>([default_pub_date__gte,default_pub_date__lte]);
+    const [pub_date,setpub_date]=useState<string[]>(["2022-01-26","2022-01-27"]);
+    const handlepub_date = (gte:string, lte:string)=>{
+      setpub_date([gte,lte]);
+    }
+
+    const [selectedall, setselectedall]= useState<boolean>(false);
+    const [selectedids,setselectedids]=useState<string[]>(initialselectedids);
+    //selectedmachine은 전체 machine list중에서 선택된 녀석들만을 포함하고 있다.
+    //사실 그래서 Redux에는 datesandvalues같은 drawable데이터가 있을 필요가 없었다. 걔네가 들어있는 다른 자료형을 만들어서 여기서 쓰고,
+    //전역상태에는 순수한 machine list만 있으면 됐었다.
+    //근데 이제와서 고치긴 귀찮으니깐 걍 두자. 어차피 텅 비어있기 때문에 메모리를 차지하진 않을 거다.
+    //근데 솔직히 만들다보니 느끼는데 redux가 굳이 필요하지 않은 케이스가 대부분인것같다. 하향식 트리 구조가 너무 깊지만 않다면 굳이 redux로 만들 필요가 있나 싶음.
+
+
+  
+    const [showmachine,setshowmachine]=useState<Machine[]>([]);
+    //showmachine은 중앙의 InfinityScrollBar에 최종적으로 전달될 녀석이다.
+
+
+    useEffect(() => {
+      //as EventListener를 주의할 것.
+      document.addEventListener('mousedown', handleClickOutsideSideBar as EventListener);
+      return () => {
+          document.removeEventListener('mousedown', handleClickOutsideSideBar as EventListener);
+      };
+  }, [refleft,refright]);
+  useEffect(() => {
+
+    getselectedmachinedata(initialselectedids);
+  },[]); 
+  useEffect(() => {
+    selectedids.length === 0 ?
+      refright.current && !ExpandRightSideBar&&
+      refright.current.classList.add("animate-pulse") :
+      refright.current && !ExpandRightSideBar&&
+      refright.current.classList.remove("animate-pulse")
+      
+  }, );
+  useEffect(()=>{
+    console.log("showmachines");
+    console.log(showmachine);
+    console.log("selectedids") 
+    console.log(selectedids);
+    console.log("all")
+    console.log(machines)
+    
+    let count=0;
+
+    ListOfWhatToShowProperty.map((w: string, _) => {
+      whattoshowproperty[w] && count++;
     });
 
-    const handlemachinesselected=(selection : number )=>
+    count === 0 ?
+      refleft.current && !ExpandLeftSideBar &&
+      refleft.current.classList.add("animate-pulse") :
+      refleft.current && !ExpandLeftSideBar &&
+      refleft.current.classList.remove("animate-pulse");
+      
+      
+  },)
+
+  //api에서 데이터를 가져오는 코드.
+  //반복문이다. 여러개의 index가 들어올 수도 있기 때문이다.
+  const handlesetselectedall=(y : boolean)=>{
+    setselectedall(y);
+  }
+  const getselectedmachinedata = async (selections : string[]) => {
+
+
+      //새롭게 업데이트할 머신들의 index들에 대한 반복문 시작.
+      selections.map(async (selection,index)=>{
+        
+        let pub_date__gte=pub_date[0];
+      let pub_date__lte=pub_date[1];
+
+
+      //새롭게 showmachine에 추가해줄 머신들의 기본 drawable 배열의 초기값(name)들을 세팅해준다.
+      let initialdrawable:datesandvalue[]=[];
+      ListOfWhatToShowProperty.map((listofwhattoshowproperty,list_index)=>{
+          initialdrawable.push({name : listofwhattoshowproperty, dates : [], values : []});
+      });
+
+      //인덱스를 찾긴 찾아야 한다.
+      let newindex =-1;
+      machines.map((machine,index)=>{machine.id===selection && (newindex=index)})
+
+      let newmachine: Machine = {
+        ...machines[newindex],//drawable과 gps 데이터가 비어있는 현재 machine list의 특정 index를 추가해준다.
+        drawable: initialdrawable,
+        gps: [],
+        gps_dates : [],
+      };
+      // console.log('here');
+      // console.log(pub_date__gte);
+      // console.log(pub_date__lte);
+      // console.log(selection);
+      // console.log(machines);
+  const sensor = await fetch(
+    `/api/datas?sort=sensor&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
+      selection
+    }`,
+  );
+//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+  let tempdatas = await sensor.json();
+  tempdatas!.map((tempdata: any,temp_index : number)=>{
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].values.push(tempdata.sensor.CO2);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(tempdata.pub_date);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].values.push(tempdata.sensor.humidity);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(tempdata.pub_date);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].values.push(tempdata.sensor.temperature);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(tempdata.pub_date);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].values.push(tempdata.sensor['P.M 2.5']);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(tempdata.pub_date);
+
+  });
+
+  const airkorea = await fetch(
+      `/api/datas?sort=airkorea&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
+        selection
+      }`,
+    );
+//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+    let tempdatas_2 = await airkorea.json();
+    tempdatas_2.map((tempdata: any,temp_index : number)=>{
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].values.push(tempdata.airkorea.khai);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].values.push(tempdata.airkorea['P.M 2.5']);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].values.push(tempdata.airkorea.CO);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].values.push(tempdata.airkorea.SO2);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].values.push(tempdata.airkorea.NO2);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].values.push(tempdata.airkorea.O3);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(tempdata.pub_date);
+    });
+
+    const gps = await fetch(
+      `/api/datas?sort=gps&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
+        selection
+      }`,
+    );
+//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+    let tempdatas_3 = await gps.json();
+    tempdatas_3.map((tempdata: any,temp_index : number)=>{
+        newmachine.gps.push(tempdata.gps);
+        newmachine.gps_dates.push(tempdata.pub_date);
+    });
+
+    //위의 굉장한 코드들을 거치면 newmachine에 새로운 machine 하나가 추가된다.
+
+    setshowmachine((showmachine) => [...showmachine, {...newmachine}]);
+      })
+      
+};
+
+
+    
+
+  const removeunselectedmachinedata=(selections : string[])=>{
+    
+    //selections는 삭제할 id 배열이다.
+    setshowmachine(
+      showmachine.filter((sm, index, source) => {
+        return selections.indexOf(sm.id) < 0;
+      })
+    );
+  }
+  
+
+
+  const handlemachinesselected=(selectids : string[] , y : boolean)=>
     {
-      dispatch(togglemachineselected(selection));
+      let temp_machines=[...machines];
+      //사실 잘못된 코드다. 이렇게 하면 machines 는 객체 배열이므로 각각의 객체들은 얕은 복사가 되어서
+      //실제로 아래의 코드를 하면 현재의 state도 변화하는 것을 볼 수 있다. 즉 불변성을 깨뜨렸다. 
+      //따라서 진짜 좋은 코드를 짜려면 완전히 값 하나하나를 복사하는 deep copy function을 만들어야 한다.
+      // 이래서 state는 웬만하면 객체이면 안된다. 최소 단위로 다 분해해야 한다. 지금은 귀찮으니깐 놔두자.(일단은 잘 작동한다.)
+      
+      selectids.map((selectid, index) => {
+          temp_machines.map((temp_machine,index)=>{
+            temp_machine.id===selectid && (temp_machine.selected=y);
+          })
+        });
+
+        if (y)
+        {
+          //추가를 해줄 때는 추가해 줄 목록을 검토해서 이미 selectedids에 존재하는지 확인하고 없는 것만 추가한다.
+          selectids = selectids.filter(
+            (selectid) => selectedids.indexOf(selectid) < 0
+          );
+          getselectedmachinedata(selectids);
+          setselectedids([...selectedids,...selectids]);
+        }
+      else{
+//machine이 unselect 되면 현재 프론트서버의 메모리에서 빼준다. 
+
+        removeunselectedmachinedata(selectids);
+        setselectedids(
+          selectedids.filter((selectedid : string) => selectids.indexOf(selectedid) < 0)
+        );
+        
+      }
+      setmachines(temp_machines);
+      
   }
 
-  const handlewhattoshowproperty = (index: string) => {
+
+
+  // ---------------------------------- whatttoshow button들을 예쁘게 사라지게하기 위한 쌩난리.
+  function sleep(ms : number) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+
+  const buttonsrefs=useRef<HTMLDivElement[]>([]);
+
+  const handlewhattoshowproperty = async (index: string) => {
+    
     let temp_whattoshowproperty: WhatToShowProperty = {...whattoshowproperty};
     temp_whattoshowproperty[index] = !temp_whattoshowproperty[index];
+    
+    if (!temp_whattoshowproperty[index])
+    {
+     let num_index=ListOfWhatToShowProperty.indexOf(index);
+     buttonsrefs.current[num_index]?.classList.remove('animate-fade-in-down')
+     buttonsrefs.current[num_index]?.classList.add('opacity-100')
+     buttonsrefs.current[num_index]?.classList.add('animate-fade-out-down')
+     await sleep(300);
+     buttonsrefs.current[num_index]?.classList.remove('animate-fade-out-down')
+    }
     setwhattoshowproperty(temp_whattoshowproperty);
   };
-
+  // 각각 button들의 Ref 배열을 만들어서, 걔네가 사라지는 이벤트(이 경우 handlewhattoshowproperty, 그 중에서도 true->false가 되는 상황)가 벌어지기 직전에 
+  //그 해당하는 Ref에 fadeoutdown 애니메이션을 추가하고, 0.5초 딜레이를 주고(sleep), 다시 그 fadeout 이벤트는 삭제를 한다.
+  //이때 animate-fade-in-down을 없애주고, opacity를 일부로 100으로 설정한 뒤 animate-fade-out-down을 걸어줘야하고, 또 animate-fade-out-down도 다시 없애줘야
+  //사라지는 애니메이션이 잘 작동한다.
+  //---------------------------------------------------------
   const handlemachinessearched=(selection : number, y : boolean)=>
   {
-    y ? dispatch(settruemachinesearched(selection)) : dispatch(setfalsemachinesearched(selection));
+    let temp_machine=machines.slice();
+    temp_machine[selection].searched=y;
+    setmachines(temp_machine);
   }
   const handleallmachinessearchedtrue=()=>
   {
-    machines.map((_,index : number) => {dispatch(settruemachinesearched(index));} );
+    let temp_machine=machines.slice();
+    temp_machine.map((t,index : number) => {t.searched=true;} );
+    setmachines(temp_machine);
     //모든 머신들을 searched = true로 초기화한다.
   }
 
-
-
-  //이들은 임시 데이터이다. 실제로는 token을 이용해 api server에서 가져와야 함!
-
-  const graph_sample: GraphProperty = {
-    inside_dates_properties: [
-      [
-        new Date("2022-01-01T03:00:00"),
-        new Date("2022-01-01T03:01:00"),
-        new Date("2022-01-02T03:02:00"),
-      ],
-      [
-        new Date("2022-01-01T05:00:00"),
-        new Date("2022-01-01T05:01:00"),
-        new Date("2022-01-02T06:02:00"),
-      ],
-    ],
-    inside_values_properties: [
-      [10, 5, 10],
-      [8, 8, 10],
-    ],
-    outside_dates_properties: [
-      [
-        new Date("2022-01-01T03:00:00"),
-        new Date("2022-01-01T03:01:00"),
-        new Date("2022-01-02T03:02:00"),
-      ],
-      [
-        new Date("2022-01-01T05:00:00"),
-        new Date("2022-01-01T05:01:00"),
-        new Date("2022-01-02T06:02:00"),
-      ],
-    ],
-    outside_values_properties: [
-      [8, 7, 8],
-      [5, 10, 6],
-    ],
-  };
-//샘플 그래프 데이터.
-  const card_sample1: CardProperty = {
-    Machine: machines[0],
-    GraphProperty: graph_sample,
-    WhatToShowProperty: whattoshowproperty,
-  };
-  const card_sample2: CardProperty = {
-    Machine: machines[1],
-    GraphProperty: graph_sample,
-    WhatToShowProperty: whattoshowproperty,
-  };
-  const card_sample3: CardProperty = {
-    Machine: machines[2],
-    GraphProperty: graph_sample,
-    WhatToShowProperty: whattoshowproperty,
-  };
-// 샘플 card.
-  const cards: CardProperty[] = [card_sample1, card_sample2, card_sample3];
-
-/// 샘플 cards 배열.
 
   return (
     // flex를 사용할 거면 flex가 className에 먼저 선언이 되어있어야 함.
@@ -172,11 +351,16 @@ const Home: NextPage = (props) => {
     // 이를 위해 grid col =1 row =1 짜리를 적용해서 한칸짜리 그리드를 채워놓으면 된다.
     // flutter의 Container나 SizedBox가 따로 없다. 전부 grid 아니면 flex로 직접 채워넣어놔야 한다.
 
-    <div className="grow flex flex-row  bg-white w-screen h-fit items-stretch gap-0">
+    <div className="grow flex flex-row justify-between bg-white w-screen h-fit justify-items-stretch gap-0">
       <div
-      ref={refleft}
-      onClick={() => {setExpandLeftSideBar(true);}}
-        className={"grow-0 w-20 transition-all ease-in-out duration-300" + (ExpandLeftSideBar && " w-3/12")}
+        ref={refleft}
+        onClick={() => {
+          setExpandLeftSideBar(true);
+        }}
+        className={
+          "grow-0 w-20 transition-all ease-in-out duration-300 " +
+          (ExpandLeftSideBar ? " w-3/12" : "")
+        }
       >
         {/*여기서 이거를 onMouseOver로 하면 이상하게 튕김현상이 일어나니 주의... 무지 헤맴 ㅠㅠ*/}
         {ExpandLeftSideBar ? (
@@ -188,18 +372,36 @@ const Home: NextPage = (props) => {
           <SmallLeftSideBar />
         )}
       </div>
-      <div className="grow ">
-        <InfinityScrollCards cardsproperty={cards} handlewhattoshowproperty={handlewhattoshowproperty} />
-      </div>
+      <InfinityScrollCards
+        handlepub_date={handlepub_date}
+        Machines={showmachine}
+        WhatToShowProperty={whattoshowproperty}
+        handlewhattoshowproperty={handlewhattoshowproperty}
+        buttonsrefs={buttonsrefs}
+        pub_date={pub_date}
+        handlemachinesselected={handlemachinesselected}
+      />
       <div
-      ref={refright}
-        className={"grow-0 w-20 transition-all ease-in-out duration-300 mr-[0.4rem]" + (ExpandRightSideBar && " w-3/12")}
-        onClick={()=>{setExpandRightSideBar(true);}}
+        ref={refright}
+        className={
+          "grow-0  w-20 transition-all ease-in-out duration-300" +
+          (ExpandRightSideBar ? " w-3/12" : "")
+        }
+        onClick={() => {
+          setExpandRightSideBar(true);
+        }}
         // onMouseEnter={handleMouseOverRightSideBar}
         // onMouseLeave={handleMouseOutRightSideBar}
       >
         {ExpandRightSideBar ? (
-          <BigSearchBar machines={machines} handleallmachinessearchedtrue={handleallmachinessearchedtrue} handlemachinesselected={handlemachinesselected} handlemachinessearched={handlemachinessearched}/>
+          <BigSearchBar
+            machines={machines}
+            handleallmachinessearchedtrue={handleallmachinessearchedtrue}
+            handlemachinesselected={handlemachinesselected}
+            handlemachinessearched={handlemachinessearched}
+            selectedall={selectedall}
+            handlesetselectedall={handlesetselectedall}
+          />
         ) : (
           <SmallSearchBar />
         )}
@@ -209,24 +411,52 @@ const Home: NextPage = (props) => {
 }
 
 export default Home;
+export const getStaticProps :GetStaticProps=async(context)=> {
+  const machine_list = await fetch( `http://auton-iot.com/api/machine/`,
+  {
+    method: 'GET',
+    headers:{
+      'Content-Type': 'application/json',
+      'Authorization' : `Token ${process.env.MASTER_KEY}`
+    }
+  }
+  );
+  
+  let tempdatas = await machine_list.json();
+  
+  //console.log(context.store);
+//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+  let tempMachines : Machine[] = [] as Machine[];
+  let selectedids: string[] =[];
+  
+  
+  
+  
+  tempdatas.map((tempdata:any,index:number)=>{
+    let tempMachine : Machine = {} as Machine;
+    tempMachine.id=tempdata.id;
+    tempMachine.car_number=tempdata.car_number;
+    if(tempdata.user) {tempMachine.user=tempdata.user;}
 
-/*      <div className="grow-0 w-3/12">*/
-/* 
-<h1 className="text-3xl font-bold underline">hello, world!</h1>
-      <div className= "flex flex-row justify-around w-full h-50"> 
-        <button
-          className="rounded bg-orange-400 hover:bg-orange-200 w-50 "
-          onClick={() => dispatch(addmachine("Test"))}
-        >
-          Machine
-        </button>
-        <input
-          type="text"
-          placeholder="token test"
-          onChange={(event) => {
-            console.log(event.target.value);
-            dispatch(settoken(event.target.value));
-          }}
-          className=" border border-black  w-50"
-        />
-      </div> */
+    index===0 ? tempMachine.selected=true :tempMachine.selected=false ;
+
+    tempMachine.searched=true;
+    tempMachine.drawable=[];
+    tempMachine.gps=[];
+    tempMachine.gps_dates=[];
+    //context.store.dispatch(getmachinelists_fromapiserver(tempMachine));
+    tempMachines.push(tempMachine);
+
+    tempMachine.selected && selectedids.push(tempMachine.id);
+  })
+
+
+    return {
+      props: {
+        machine_list:tempMachines,
+        initialselectedids : selectedids,
+      }
+    }
+
+}
+

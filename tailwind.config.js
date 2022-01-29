@@ -4,6 +4,10 @@ module.exports = {
   theme: {
 
     extend: {
+      boxShadow: {
+        'all_width': '0 0 0 100vw rgba(0, 0, 0, 0.5)',
+        'all_height': '0 0 0 100vh rgba(0, 0, 0, 0.5)',
+      },
        keyframes: {
         'fade-in-down': {
             '0%': {
@@ -27,8 +31,8 @@ module.exports = {
       },
     },
     animation: {
-        'fade-in-down': 'fade-in-down 0.5s ease-out',
-        'fade-out-down': 'fade-out-down 0.5s ease-out',
+        'fade-in-down': 'fade-in-down 0.3s ease-out',
+        'fade-out-down': 'fade-out-down 0.3s ease-out',
     }
     },
   },

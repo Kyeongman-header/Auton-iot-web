@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { Context, MakeStore,createWrapper } from 'next-redux-wrapper';
 import machineSetSlices from './machine_slices';
-import TokenSlices from './token_slices';
+//import TokenSlices from './token_slices';
 import {AnyAction, Store, createStore } from "redux";
 import { composeWithDevTools } from 'redux-devtools-extension';
 //configureStore를 사용한 이상 쓸 필요가 없다.
@@ -10,7 +10,8 @@ import { composeWithDevTools } from 'redux-devtools-extension';
 export const store=configureStore({
     reducer:{
         machines: machineSetSlices,
-        token: TokenSlices
+        //token: TokenSlices
+        //당연하지만, 토큰은 redux에 있으면 안된다.
     },
 })
 // 이 부분은 공식문서에서 추천하는 방식을 그대로 따랐다.

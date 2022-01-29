@@ -5,7 +5,7 @@ export interface TokenState{
     token : string,
 }
 const initialState: TokenState={ // 반드시 initialState라는 이름이어야 한다.
-    login:false,
+    login:true,
     token: "",
 }
 

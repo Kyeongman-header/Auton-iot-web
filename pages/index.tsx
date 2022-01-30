@@ -32,8 +32,9 @@ import { LengthOfListOfWhatToShowProperty, sample_whattoshowproperty, WhatToShow
 import { ListOfWhatToShowProperty } from '../components/Types/TypesWhatToShowProperty';
 
 import addDays from '../components/addDays';
-import { AppContext } from 'next/app';
-import _ from 'lodash';
+import convertDateToString from '../components/convertDateToString';
+import convertDateFormatString from '../components/ConvertDateFormatString';
+
 
 const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsType<typeof getStaticProps>) => {
   // const [machines,setmachines] : Machine[] =[{id : "41", car_number : "12하 1234"},{id : "42", car_number : "12하 1212", user : "sky@naver.com"},{id : "43", car_number : "12하 1255"}];
@@ -78,20 +79,16 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
     
     const today=new Date();
     const yesterday=addDays(today,-1);
-    const today_yy=today.getFullYear();
-    const today_mm=today.getMonth()+1;
-    const today_dd=today.getDate();
-    const default_pub_date__lte=today_yy+'-'+today_mm+'-'+today_dd;
 
-    const yesterday_yy=yesterday.getFullYear();
-    const yesterday_mm=yesterday.getMonth()+1;
-    const yesterday_dd=yesterday.getDate();
-    const default_pub_date__gte=yesterday_yy+'-'+yesterday_mm+'-'+yesterday_dd;
+    const default_pub_date=convertDateToString(yesterday,today);
 
-    //const [pub_date,setpub_date]=useState<string[]>([default_pub_date__gte,default_pub_date__lte]);
-    const [pub_date,setpub_date]=useState<string[]>(["2022-01-26","2022-01-27"]);
-    const handlepub_date = (gte:string, lte:string)=>{
-      setpub_date([gte,lte]);
+
+
+    const [pub_date,setpub_date]=useState<string[]>(default_pub_date);
+    const handlepub_date = (gte:Date, lte:Date)=>{
+      const date=convertDateToString(gte,lte);
+      setpub_date(date);
+      getselectedmachinedata(selectedids,date[0],date[1],true);
     }
 
     const [selectedall, setselectedall]= useState<boolean>(false);
@@ -106,7 +103,8 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
   
     const [showmachine,setshowmachine]=useState<Machine[]>([]);
     //showmachine은 중앙의 InfinityScrollBar에 최종적으로 전달될 녀석이다.
-
+    const [loading,setLoading]=useState<boolean>(false);
+    const [addloading,setAddLoading]=useState<boolean>(false);
 
     useEffect(() => {
       //as EventListener를 주의할 것.
@@ -116,7 +114,6 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       };
   }, [refleft,refright]);
   useEffect(() => {
-
     getselectedmachinedata(initialselectedids);
   },[]); 
   useEffect(() => {
@@ -128,12 +125,17 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       
   }, );
   useEffect(()=>{
+
+    //로그용.
     console.log("showmachines");
     console.log(showmachine);
-    console.log("selectedids") 
-    console.log(selectedids);
-    console.log("all")
-    console.log(machines)
+    // console.log("selectedids") 
+    // console.log(selectedids);
+    // console.log("all")
+    // console.log(machines)
+    // console.log("whattoshow")
+    // console.log(whattoshowproperty);
+    // console.log(pub_date);
     
     let count=0;
 
@@ -147,7 +149,9 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       refleft.current && !ExpandLeftSideBar &&
       refleft.current.classList.remove("animate-pulse");
       
+    
       
+    
   },)
 
   //api에서 데이터를 가져오는 코드.
@@ -155,15 +159,36 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
   const handlesetselectedall=(y : boolean)=>{
     setselectedall(y);
   }
-  const getselectedmachinedata = async (selections : string[]) => {
 
+
+  
+  const getselectedmachinedata = async (selections : string[],gte? : string, lte? : string, modify? : boolean) => {
 
       //새롭게 업데이트할 머신들의 index들에 대한 반복문 시작.
-      selections.map(async (selection,index)=>{
-        
-        let pub_date__gte=pub_date[0];
-      let pub_date__lte=pub_date[1];
 
+      
+      let temp_showmachine=showmachine.slice();
+      let add_showmachine : Machine[] = [];
+      
+      
+      setLoading(true);
+      if(!modify)
+      {
+        setAddLoading(true);
+      }
+
+      //이거는 진짜진짜 중요하다.
+      //반복문 안에서 fetch등이 있어서 async이면 이 반복문 자체가 끝나기를 안 기다리고 그냥 넘어간다.
+      //따라서 반복문 바깥에서 setState를 하는 것은 의미가 없어진다.
+      //그것을 방지하기 위해 이와 같은 await Promise.all구문을 써줘야 한다!!!!!!!!!
+      let temp=await Promise.all(selections.map(async (selection,index)=>{
+
+      let pub_date__gte=gte ? gte : pub_date[0];
+      let pub_date__lte=lte ? lte : pub_date[1];
+      
+      // console.log("get data from api");
+      // console.log(pub_date__gte);
+      // console.log(pub_date__lte);
 
       //새롭게 showmachine에 추가해줄 머신들의 기본 drawable 배열의 초기값(name)들을 세팅해준다.
       let initialdrawable:datesandvalue[]=[];
@@ -194,16 +219,21 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
 //['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
   let tempdatas = await sensor.json();
   tempdatas!.map((tempdata: any,temp_index : number)=>{
+      let dates : string=convertDateFormatString(tempdata.pub_date);
       newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].values.push(tempdata.sensor.CO2);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(tempdata.pub_date);
+      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(tempdata.pub_date);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(dates)
       newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].values.push(tempdata.sensor.humidity);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(tempdata.pub_date);
+      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(tempdata.pub_date);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(dates)
       newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].values.push(tempdata.sensor.temperature);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(tempdata.pub_date);
+      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(tempdata.pub_date);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(dates)
       newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].values.push(tempdata.sensor['P.M 2.5']);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(tempdata.pub_date);
-
+      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(tempdata.pub_date);
+      newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(dates)
   });
+  
 
   const airkorea = await fetch(
       `/api/datas?sort=airkorea&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
@@ -213,18 +243,25 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
 //['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
     let tempdatas_2 = await airkorea.json();
     tempdatas_2.map((tempdata: any,temp_index : number)=>{
+      let dates : string=convertDateFormatString(tempdata.pub_date).slice();
         newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].values.push(tempdata.airkorea.khai);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(tempdata.pub_date);
+        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(dates)
         newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].values.push(tempdata.airkorea['P.M 2.5']);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(tempdata.pub_date);
+        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(dates)
         newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].values.push(tempdata.airkorea.CO);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(tempdata.pub_date);
+        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(dates)
         newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].values.push(tempdata.airkorea.SO2);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(tempdata.pub_date);
+        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(dates)
         newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].values.push(tempdata.airkorea.NO2);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(tempdata.pub_date);
+        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(dates)
         newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].values.push(tempdata.airkorea.O3);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(tempdata.pub_date);
+        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(tempdata.pub_date);
+        newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(dates)
     });
 
     const gps = await fetch(
@@ -235,14 +272,26 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
 //['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
     let tempdatas_3 = await gps.json();
     tempdatas_3.map((tempdata: any,temp_index : number)=>{
+      let dates : string=convertDateFormatString(tempdata.pub_date);
         newmachine.gps.push(tempdata.gps);
-        newmachine.gps_dates.push(tempdata.pub_date);
+        newmachine.gps_dates.push(dates);
     });
 
-    //위의 굉장한 코드들을 거치면 newmachine에 새로운 machine 하나가 추가된다.
 
-    setshowmachine((showmachine) => [...showmachine, {...newmachine}]);
-      })
+    //위의 굉장한 코드들을 거치면 newmachine에 새로운 machine 하나가 추가된다.
+    modify
+      ? showmachine.map((sm, index) => {
+          if (sm.id === selection) {
+            temp_showmachine.splice(index, 1);
+            temp_showmachine.splice(index, 0, newmachine);
+          }
+        })
+      : add_showmachine.push(newmachine);
+      }))
+      
+      setLoading(false);
+      setAddLoading(false);
+      modify ? setshowmachine(temp_showmachine) : setshowmachine((showmachine) => [...showmachine,  ...add_showmachine ]);
       
 };
 
@@ -269,7 +318,17 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       //따라서 진짜 좋은 코드를 짜려면 완전히 값 하나하나를 복사하는 deep copy function을 만들어야 한다.
       // 이래서 state는 웬만하면 객체이면 안된다. 최소 단위로 다 분해해야 한다. 지금은 귀찮으니깐 놔두자.(일단은 잘 작동한다.)
       
-      selectids.map((selectid, index) => {
+      //이때 만약 remove에서 행동의 결과로 길이가 0가 될것 같으면
+//맨 처음 것 하나는 남겨놓는다.
+let lestids = selectedids.filter(
+  (selectedid) => selectids.indexOf(selectedid) < 0
+);
+if(lestids.length===0 && y===false)
+{
+  selectids.splice(0, 1);
+}
+
+      selectids && selectids.map((selectid, index) => {
           temp_machines.map((temp_machine,index)=>{
             temp_machine.id===selectid && (temp_machine.selected=y);
           })
@@ -281,14 +340,17 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
           selectids = selectids.filter(
             (selectid) => selectedids.indexOf(selectid) < 0
           );
+
           getselectedmachinedata(selectids);
           setselectedids([...selectedids,...selectids]);
         }
       else{
-//machine이 unselect 되면 현재 프론트서버의 메모리에서 빼준다. 
+//machine이 unselect 되면 현재 프론트서버의 메모리에서 빼준다.
 
-        removeunselectedmachinedata(selectids);
-        setselectedids(
+
+        
+        selectids && removeunselectedmachinedata(selectids);
+        selectids && setselectedids(
           selectedids.filter((selectedid : string) => selectids.indexOf(selectedid) < 0)
         );
         
@@ -340,8 +402,6 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
     setmachines(temp_machine);
     //모든 머신들을 searched = true로 초기화한다.
   }
-
-
   return (
     // flex를 사용할 거면 flex가 className에 먼저 선언이 되어있어야 함.
     //  w-full 이든 w-2/3 이든 뭐든 백분율로 되어있는 크기 설정은 반드시 상위 컴포넌트가 고정된 크기가 있어야 한다. 혹은 비율 크기라면 그 상위상위 컴포넌트가 고정 크기가 있어야 한다.
@@ -371,7 +431,8 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
         ) : (
           <SmallLeftSideBar />
         )}
-      </div>
+        </div>
+      
       <InfinityScrollCards
         handlepub_date={handlepub_date}
         Machines={showmachine}
@@ -380,6 +441,8 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
         buttonsrefs={buttonsrefs}
         pub_date={pub_date}
         handlemachinesselected={handlemachinesselected}
+        loading={loading}
+        addloading={addloading}
       />
       <div
         ref={refright}

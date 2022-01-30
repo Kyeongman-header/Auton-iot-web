@@ -1,7 +1,10 @@
+import { X448KeyPairKeyObjectOptions } from "crypto";
+
+
 export interface datesandvalue{
     name : string,
     dates:string[],
-    values: number[],
+    values: any[], // null을 담을 수 있어야 함(chart)
 }
 
 

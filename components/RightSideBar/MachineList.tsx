@@ -13,9 +13,8 @@ export interface MachineListProperty{
 export default function MachineList({machines,handlemachinesselected,selectedall, handlesetselectedall} : MachineListProperty){
     const searched_machines=machines.filter(machine=>machine.searched);
     useEffect(()=>{
-      //현재 보여지는 모든 녀석이 unselected이면 반드시 check로 바꾼다. 참고로 true인게 uncheck 기능 활성화이다.
-      searched_machines.every((searched_machine)=>!searched_machine.selected) ? handlesetselectedall(false) : handlesetselectedall(true) })
-      //현재 보여지는 모든 녀석이 selected가 아니면 반드시 check로 바꾼다. 참고로 false인게 check 기능 활성화이다.
+      //현재 보여지는 모든 녀석이 selected이면 반드시 uncheck로 바꾼다. 참고로 false인게 check 기능 활성화이다. 참고로 true인게 uncheck 기능 활성화이다
+      searched_machines.every((searched_machine)=>searched_machine.selected) && handlesetselectedall(true) })
     //searched인 머신들만 그릴 것이다.
     return (
     <div className="row-start-5 row-end-[10] flex flex-col justify-start w-full overflow-scroll h-full animate-fade-in-down">

@@ -4,12 +4,14 @@ import type {GraphProperty} from '../Types/TypesGraphProperty';
 import React, { MouseEvent,  useState,useRef, useEffect, forwardRef, ButtonHTMLAttributes} from 'react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";//datepicker랑 쌍으로 붙어다니는 놈이다.
-import {CalendarIcon} from '@heroicons/react/outline';
-import {CalendarIcon as SolidCalendarIcon} from '@heroicons/react/solid'
+import {CalendarIcon,ExclamationIcon} from '@heroicons/react/outline';
+import {CalendarIcon as SolidCalendarIcon, ExclamationIcon as SolidExclamationIcon} from '@heroicons/react/solid'
 import { ListOfWhatToShowProperty } from '../Types/TypesWhatToShowProperty';
 
 import Chart from './Chart';
 import Map from './Map';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
 
 
 export interface ButtonProps extends React.ComponentPropsWithoutRef<"button"> {
@@ -25,6 +27,7 @@ export default function Graph({
   pub_date,
   handlepub_date,
   loading,
+  onegpsstate,
 }: GraphProperty) {
   const [screengraph, setscreengraph] = useState<Boolean>(false);
   const [calendariconmouseon, setcalendariconmouseon] =
@@ -49,12 +52,15 @@ export default function Graph({
   }
   //const로 뭔가를 박아버리면 그 어떤 렌더링보다 가장 먼저 그 함수가 호출될때 실행되므로, 특히 props로 들어온 값들로 렌더링 할 데이터들을
   //세팅할 때 유용하다.
+
   
 
   const datesandvalue = temp_graphproperty;
   const [zero,setzero]=useState<boolean>(datesandvalue.length===0);
   const doh=pub_date[0] && pub_date[1] && new Date(pub_date[1]).getDate()-new Date(pub_date[0]).getDate() >6 ? true : false;
   const [dayorhour, setdayorhour]=useState<boolean>(doh);
+  const [second, setsecond] = useState<boolean>(false);
+  const [mouseoncautionicon, setMouseoncautionicon]=useState<boolean>(false);
 
 
 useEffect(()=>{
@@ -105,44 +111,91 @@ CalendarInput.displayName='Example';
       }
     >
       <div className="flex flex-col h-full">
-        <div className=" w-full h-fit z-[100] flex  justify-between">
+        <div className=" w-full h-fit flex  justify-between justify-items-center items-center">
           <div className="w-fit">
-          <DatePicker
-            selectsRange={true}
-            startDate={dateRange[0]}
-            endDate={dateRange[1]}
-            showMonthDropdown
-            showYearDropdown
-            dropdownMode="select"
-            popperPlacement="top-start"
-            customInput={<CalendarInput />}
-            onChange={(update: any) => {
-              setDateRange(update);
+            <DatePicker
+              selectsRange={true}
+              startDate={dateRange[0]}
+              endDate={dateRange[1]}
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="select"
+              popperPlacement="top-start"
+              customInput={<CalendarInput />}
+              onChange={(update: any) => {
+                setDateRange(update);
 
-              update[0] && update[1] && handlepub_date(update[0], update[1]);
-            }}
-          />
+                update[0] && update[1] && handlepub_date(update[0], update[1]);
+              }}
+            />
           </div>
-        <button
-          className="w-[10rem] h-8 rounded-lg bg-blue-800 duration-300 hover:bg-blue-500 hover:scale-105 text-sm text-white"
-          onClick={() => {
-            setdayorhour(!dayorhour);
-          }}
-        >
-          {dayorhour ? "시간별로 보기" :  "일별로 보기"}
-        </button>
-          
+          <div className="flex">
+            <div
+              title="컴퓨터 렉 주의"
+              className={(second ? "bg-slate-500 text-white mr-1" : " bg-inherit text-inherit ")+
+                " rounded-full  self-center flex justify-center items-center duration-300 h-8  " +
+                (ismap
+                  ? "cursor-default"
+                  : " hover:shadow-md cursor-pointer")
+              }
+              onMouseOver={() => {
+                !ismap && setMouseoncautionicon(true);
+              }}
+              onMouseLeave={() => {
+                !ismap && setMouseoncautionicon(false);
+              }}
+              onClick={() => {
+                !ismap && setsecond(!second);
+              }}
+            >
+              {second ? (
+                <SolidExclamationIcon className="w-5 h-5" />
+              ) : (
+                <ExclamationIcon className="w-5 h-5" />
+              )}
+              <p className="text-sm">
+                &nbsp;Second &nbsp;
+              </p>
+            </div>
+            <div
+              className={(!dayorhour && !second ? "bg-slate-500 text-white ml-1 mr-1" : " bg-inherit text-inherit " )+
+                " flex justify-center items-center w-fit h-8 rounded-full duration-300 text-sm " +
+                (ismap
+                  ? " cursor-default "
+                  : " hover:shadow-md cursor-pointer")
+              }
+              onClick={() => {
+                !ismap && setdayorhour(false);
+                !ismap && setsecond(false);
+              }}
+            >
+              {"\u00a0\u00a0Hour\u00a0\u00a0 "}
+            </div>
+            <div
+              className={(dayorhour && !second ? "bg-slate-500 text-white ml-1" : " bg-inherit text-inherit " )+
+                " flex justify-center items-center w-fit h-8 rounded-full duration-300 text-sm " +
+                (ismap
+                  ? " cursor-default "
+                  : " hover:shadow-md cursor-pointer")
+              }
+              onClick={() => {
+                !ismap && setdayorhour(true);
+                !ismap && setsecond(false);
+              }}
+            >
+              {"\u00a0\u00a0Day\u00a0\u00a0 "}
+            </div>
+          </div>
         </div>
         <div
-          title="클릭하여 확대하기"
           className={
             "grow grid grid-cols-1 bg-white rounded-lg cursor-pointer duration-300 border " +
             (screengraph
               ? " scale-150 sm:shadow-all_height md:shadow-all_width z-[100]"
-              : " hover:shadow-lg hover:scale-105")
+              : !ismap && " hover:shadow-lg hover:scale-105")
           }
           onClick={() => {
-            setscreengraph(!screengraph);
+            !ismap && setscreengraph(!screengraph);
           }}
         >
           {loading ? (
@@ -151,9 +204,14 @@ CalendarInput.displayName='Example';
               <span>Loading...</span>
             </div>
           ) : ismap ? (
-            <Map gps={gps} gps_date={gps_date} />
+            <Map onegpsstate={onegpsstate} datesandvalue={datesandvalue} />
           ) : (
-            <Chart zero={zero} datesandvalue={datesandvalue} dayorhour={dayorhour} />
+            <Chart
+              zero={zero}
+              datesandvalue={datesandvalue}
+              dayorhour={dayorhour}
+              second={second}
+            />
           )}
         </div>
       </div>

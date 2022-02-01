@@ -15,7 +15,6 @@ import { resettosample } from '../redux/machine_slices';
 export default function Navigation()
 {
 
-  const dispatch = useDispatch();
   const router=useRouter();
   //NAV 바에서는 toggle 버튼을 양옆에 생성한다. 이 토글 버튼을 누르면 양쪽의 bar가 켜진 채로 고정된다.
   //그리고 gps 구글 맵은 어떻게 ui를 작성할 것인지 고민해야 한다.
@@ -29,7 +28,7 @@ export default function Navigation()
   
   return (
       <div className="flex flex-col flex-between w-screen h-fit  bg-white">
-        <div className="w-full flex flex-row justify-between">
+        {/* <div className="w-full flex flex-row justify-between">
           <div className="translate-y-2 translate-x-2">
             {login ? (
               <div className="flex h-5">
@@ -67,10 +66,10 @@ export default function Navigation()
             </div>
           )}
           </div>
-        </div>
+        </div> */}
         <nav className="w-full h-30 grid grid-cols-1">
           <div className="justify-self-center flex flex-col justify-center transition ease-in-out hover:shadow duration-300">
-            <Image src={logo} className="scale-75 h-fit" alt="logo.png"></Image>
+            <Image src={logo} className="scale-x-75 h-fit" alt="logo.png"></Image>
             <p className="text-center font-[600] text-2xl text-green-700">
               빌트인-공기청정기 차량 운영 실황
             </p>

@@ -34,6 +34,8 @@ import { ListOfWhatToShowProperty } from '../components/Types/TypesWhatToShowPro
 import addDays from '../components/addDays';
 import convertDateToString from '../components/convertDateToString';
 import convertDateFormatString from '../components/ConvertDateFormatString';
+import { addGpsSlices, removeGpsSlices } from '../redux/forgps_slices';
+import gpstomapgps from '../components/gpstomapgps';
 
 
 const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsType<typeof getStaticProps>) => {
@@ -42,11 +44,15 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
   //const machines = useSelector((state: RootState) => state.machines.Machines);
   //const token = useSelector((state: RootState) => state.token.token);
 
+
+  const forgps = useSelector((state: RootState) => state.forgps.OneGpsStates);
+  const dispatch=useDispatch();
+
   //왼쪽 사이드바와 오른쪽 사이드바의 확장 state.
   const [ExpandLeftSideBar, setExpandLeftSideBar] =
-    useState<boolean>(false);
+    useState<boolean>(true);
   const [ExpandRightSideBar, setExpandRightSideBar] =
-    useState<boolean>(false);
+    useState<boolean>(true);
   const [machines, setmachines]=useState<Machine[]>(machine_list);
 
 
@@ -127,8 +133,8 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
   useEffect(()=>{
 
     //로그용.
-    console.log("showmachines");
-    console.log(showmachine);
+    // console.log("showmachines");
+    // console.log(showmachine);
     // console.log("selectedids") 
     // console.log(selectedids);
     // console.log("all")
@@ -275,18 +281,40 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       let dates : string=convertDateFormatString(tempdata.pub_date);
         newmachine.gps.push(tempdata.gps);
         newmachine.gps_dates.push(dates);
+        
     });
 
 
     //위의 굉장한 코드들을 거치면 newmachine에 새로운 machine 하나가 추가된다.
-    modify
-      ? showmachine.map((sm, index) => {
-          if (sm.id === selection) {
-            temp_showmachine.splice(index, 1);
-            temp_showmachine.splice(index, 0, newmachine);
-          }
+    if (modify) {
+      showmachine.map((sm, index) => {
+        if (sm.id === selection) {
+          temp_showmachine.splice(index, 1);
+          dispatch(removeGpsSlices(selection));
+          temp_showmachine.splice(index, 0, newmachine);
+          let mapgps = gpstomapgps(newmachine.gps,newmachine.gps_dates);
+
+          dispatch(
+            addGpsSlices({
+              gps: mapgps,
+              datesandvalue: newmachine.drawable,
+              id: sm.id,
+            })
+          );
+        }
+      });
+    } else {
+      add_showmachine.push(newmachine);
+      let mapgps = gpstomapgps(newmachine.gps,newmachine.gps_dates);
+      dispatch(
+        addGpsSlices({
+          gps: mapgps,
+          datesandvalue: newmachine.drawable,
+          id: selection
         })
-      : add_showmachine.push(newmachine);
+      );
+    }
+      
       }))
       
       setLoading(false);
@@ -306,6 +334,9 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
         return selections.indexOf(sm.id) < 0;
       })
     );
+    selections.map((selection,index)=>{
+      dispatch(removeGpsSlices(selection));
+    })
   }
   
 

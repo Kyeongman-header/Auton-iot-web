@@ -21,7 +21,6 @@ export default function MachineList({machines,handlemachinesselected,selectedall
         {<div className=" w-20 h-15 flex-col cursor-pointer" onClick={()=>{
           let idlists : string[] = [];
           machines.map((machine:Machine, index:number)=>{ machine.searched && idlists.push(machine.id)});
-          console.log(idlists);
           handlemachinesselected(idlists,!selectedall);
           handlesetselectedall(!selectedall);
         } } >

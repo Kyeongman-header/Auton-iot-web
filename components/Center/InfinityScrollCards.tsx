@@ -4,6 +4,9 @@ import { MutableRefObject, useEffect, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { Machine } from '../Types/TypesMachine';
 import { LengthOfListOfWhatToShowProperty, ListOfWhatToShowProperty, WhatToShowProperty } from '../Types/TypesWhatToShowProperty';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
+import machine_slices from '../../redux/machine_slices';
 
 export interface InfinityScrollCardsProperty{
     Machines : Machine[],
@@ -52,7 +55,18 @@ export default function InfinityScrollCards({
   //sm:w-[600px] md:w-[900px] lg:w-[1100px]
   //여기서 w 정해주는게 문제였음.
   
+  const forgps=useSelector((state: RootState)=> state.forgps.OneGpsStates);
 
+  const MachineIdToGpsIndex=(machineid : string)=>{
+    let index=0;
+    for (index=0;index<forgps.length;index++)
+    {
+      if(forgps[index].id===machineid){
+        break;
+      }
+    }
+    return index;
+  }
 
   return (
     <div className="grow flex flex-col h-fit">
@@ -68,6 +82,7 @@ export default function InfinityScrollCards({
          ) : (
            <Card
              key={index}
+              onegpsstate={forgps[MachineIdToGpsIndex(machine.id)]}
              Machine={machine}
              WhatToShowProperty={WhatToShowProperty}
              handlewhattoshowproperty={handlewhattoshowproperty}

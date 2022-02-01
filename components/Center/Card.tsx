@@ -13,8 +13,12 @@ import xlsx from 'xlsx';
 import "react-datepicker/dist/react-datepicker.css";//datepicker랑 쌍으로 붙어다니는 놈이다.
 import { setAutoFreeze } from 'immer';
 import convertDateFormatString from '../ConvertDateFormatString';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../redux/store';
+import { OneGpsState } from '../../redux/forgps_slices';
 
 export interface CardsProperty{
+  onegpsstate:OneGpsState,
     Machine: Machine,
     WhatToShowProperty: WhatToShowProperty,
     handlewhattoshowproperty : (index : string)=>void,
@@ -28,6 +32,7 @@ export interface CardsProperty{
 
 
 export default function Cards({
+  onegpsstate,
   Machine,
   WhatToShowProperty,
   handlewhattoshowproperty,
@@ -49,8 +54,7 @@ export default function Cards({
 
   const [startDate, endDate] = pub_date;
 
- 
- 
+  
   
   const zip = (rows: [string[], number[]]) =>
     rows[0].map((_, c) => rows.map((row) => row[c]));
@@ -193,6 +197,7 @@ export default function Cards({
       </div>
       <Graph
       id={Machine.id}
+      onegpsstate={onegpsstate}
         datesandvalue_props={Machine.drawable}
         ismap={map}
         gps={Machine.gps}

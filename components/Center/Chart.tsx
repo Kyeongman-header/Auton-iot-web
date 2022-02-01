@@ -4,16 +4,17 @@ import { useEffect, useState } from "react";
 import { X448KeyPairKeyObjectOptions } from "crypto";
 import { WhatToShowProperty } from "../Types/TypesWhatToShowProperty";
 import {EmojiSadIcon} from "@heroicons/react/outline";
-import { xorBy } from "lodash";
+import * as d3 from 'd3';
 
 export interface ChartProperty{
     datesandvalue :datesandvalue[],
     dayorhour : boolean,
     zero : boolean,
+    second: boolean,
 }
 
 interface XY{
-    x: string,
+    x: any,
     y: any,
 }
 interface chartform{
@@ -25,135 +26,151 @@ interface chartform{
 const colors = ["hsl(100, 5%, 5%)","hsl(111, 10%, 10%)","hsl(63, 15%, 15%)","hsl(130, 20%, 20%)","hsl(100, 25%, 25%)","hsl(100,30%,30%)","hsl(100,35%,35%)","hsl(100,40%,40%)","hsl(100,46%,46%)","hsl(100,78%,58%)"]
 function converter(dayorhour:boolean,now:Date)
 {
-  return dayorhour ? (now.getMonth()+1).toString()+"."+now.getDate().toString() : (now.getMonth()+1).toString()+"."+now.getDate().toString()+"/"+now.getHours().toString();
+  return dayorhour ? (now.getMonth()+1).toString()+"."+now.getDate().toString() : (now.getMonth()+1).toString()+"."+now.getDate().toString()+"/"+now.getHours().toString()+"h";
 }
 
-function convertdata(datesandvalue : datesandvalue[], dayorhour : boolean){
+function convertdata(datesandvalue : datesandvalue[], dayorhour : boolean,second:boolean){
     let data : chartform[] = [];
-    let prevdates : Date[] = [];
-    let nowdates : Date[] = [];
-    datesandvalue.map((dav,dav_index) =>{
-        let previndex=0;
-        let nowindex=0;
-        let xy : XY[] =[];
-        let average : number = 0;
-        let now : Date=new Date(dav.dates[0]);
-        let count : number =0;
-        for (let index=0;index<dav.dates.length;index++)
-        {
-          
-          //dates를 보며 시간/day가 변할 때마다 now를 바꾸고 average를 xy에다가 넣는다.
-          //이때 모든 data가 x축은 통일하되 y축 값은 null로 해도 된다.
-          //따라가면서 바로 이전 date를 보고 만약 거기에 없는 값이 들어가는 거라면 위치를 보고 앞뒤 본 다음에 앞의 데이터에 x는 해당 타임라인값을, y는 null을 넣어주면 된다.
+  //second 항목이라면 완전히 다른 방식으로 접근해야 한다.
+  //일단 second라면 이녀석은 linear 데이터이다.
+  //data 역시 linear 데이터로 잡는다. 그리고 x축을 datesandvalue의 date의 getTime()으로 한다.
+  if(second)
+  {datesandvalue.map((dav, dav_index) => {
+    let xy: XY[] = [];
+    for (let index = 0; index < dav.dates.length; index++) {
+      //let linearx=new Date(dav.dates[index]).getTime();
+      let linearx=dav.dates[index];
+      xy.push({ x: linearx, y: dav.values[index] });
+    }
+    xy.length !== 0 && data.push({ id: dav.name, color: colors[dav_index], data: xy });
+  })}
+     
+  else {
+    datesandvalue.map((dav, dav_index) => {
+      let xy: XY[] = [];
+      let average: number = 0;
+      let now: Date = new Date(dav.dates[0]);
+      let count: number = 0;
+      for (let index = 0; index < dav.dates.length; index++) {
+        if (
+          dayorhour
+            ? new Date(dav.dates[index]).getDate() !== now.getDate() || index===dav.dates.length-1
+            : new Date(dav.dates[index]).getHours() !== now.getHours() || index===dav.dates.length-1
+        ) {
+          let time = converter(dayorhour, now);
+          xy.push({ x: time, y: average });
 
-          if(dayorhour ? new Date(dav.dates[index]).getDate()!==now.getDate() : new Date(dav.dates[index]).getHours()!==now.getHours())
-          {
-              
-              
-              // else // 그냥 정상적으로 똑같을 때.
-              {
-                // previndex=previndex+1;
-                // nowindex=nowindex+1;
-                let time=converter(dayorhour,now);
-                //data[dav_index].data.splice(nowindex,0,{x:converter(dayorhour, now),y: average});
-              xy.push({x:time,y:average})
-              }
-              nowindex=nowindex+1;
-              nowdates.push(now);
-
-              average=0;
-              now=new Date(dav.dates[index]);
-              count=0;
-
-          }
-          count=count+1;
-          average=(average*(count-1)+dav.values[index])/count;
+          average = 0;
+          now = new Date(dav.dates[index]);
+          count = 0;
         }
-        let newchartform : chartform = {id : dav.name, color:colors[dav_index],data : xy};
-        //길이가 0인 놈은 아예 넣지도 않는다.
-        xy.length!==0 && data.push(newchartform);
-        prevdates=nowdates.slice();
-    })
+        count = count + 1;
+        average = (average * (count - 1) + dav.values[index]) / count;
+      }
+      let newchartform: chartform = {
+        id: dav.name,
+        color: colors[dav_index],
+        data: xy,
+      };
+      //길이가 0인 놈은 아예 넣지도 않는다.
+      xy.length !== 0 && data.push(newchartform);
+    });
+  }
 
-    let temp_dates : string[] = [];
-    //unique array만 뽑아냄.
-    data.map((d,index)=>{
-      
-      d.data.map((xy,index)=>{
+    //airkorea와 sensor는 시간축이 다르다. 서로 어떤 시간은 있는 놈도 있고 없는 놈도 있다.
+    //없는 시간대에는 그 그래프가 뚝 끊겨 있는게 맞다.
+    //이것은 nivo.line에서는 holl이라고 부른다. holl을 표현하기 위해서는 해당 x값(date)는 존재하되 y값이 null이면 된다.
+
+    //이를 위해 모든 x축(시간축)을 전부 포함하는 새로운 x축을 만들고, 현재의 data array들을 거기에 맞춰서 껴넣어야 한다(y값이 없으면 null로.)
+    //우선 x축들을 전부 포함하는 중복없는 시간축 배열 temp_dates를 만든다.
+    let temp_dates: string[] = [];
+    //unique array만 뽑아내는 반복문.
+    data.map((d, index) => {
+      d.data.map((xy, index) => {
         temp_dates.push(xy.x);
-      })
-
-
+      });
       const uniqueArr = temp_dates.filter((element, index) => {
         return temp_dates.indexOf(element) === index;
+      });
+      temp_dates = uniqueArr;
     });
-      temp_dates=uniqueArr;
-    })
 
-    
-    temp_dates.sort(function(a,b){
+    //이제 temp_dates를 시간 순서대로 정렬한다.
+    temp_dates.sort(function (a, b) {
       // Turn your strings into dates, and then subtract them
       // to get a value that is either negative, positive, or zero.
-      let month=a.split('.')[0];
-      let date=a.split('.')[1].split('/')[0];
-      let hour=a.split('.')[1].split('/')[1];
-      let newa=new Date("2022-"+month+"-"+date+" "+hour+":00:00");
-      month=b.split('.')[0];
-      date=b.split('.')[1].split('/')[0];
-      hour=b.split('.')[1].split('/')[1];
-      let newb=new Date("2022-"+month+"-"+date+" "+hour+":00:00");
-      return new Date(newa).getTime()- new Date(newb).getTime() ;
+      let month="";
+      let date="";
+      let hour="";
+      let newa : Date;
+      let newb : Date;
+      if(second)
+      {
+
+        newa = new Date(a);
+        newb = new Date(b);
+      }
+      else{
+      month = a.split(".")[0];
+      date = a.split(".")[1].split("/")[0];
+      hour = a.split(".")[1].split("/")[1].substring(0,a.split(".")[1].split("/")[1].length-1);
+
+      newa = new Date("2022-" + month + "-" + date + " " + hour + ":00:00");
+
+      month = b.split(".")[0];
+      date = b.split(".")[1].split("/")[0];
+      hour = b.split(".")[1].split("/")[1].substring(0,b.split(".")[1].split("/")[1].length-1);
+      
+      newb = new Date("2022-" + month + "-" + date + " " + hour + ":00:00");
+      }
+      //시간까지 포함하여 정렬하려면 getDate가 아니라 getTime인 점 주의.
+      return newa.getTime() - newb.getTime();
     });
-    
+
     //이제 temp_dates는 오름차순으로 정렬된 모든 date들을 다 포함하는 배열이다.
-    // let temp_xy : XY[]=[];
-    // for(let i =0; i<temp_dates.length; i++)
-    // {
-    //   let newxy : XY={x:temp_dates[i],y:null};
-    //   temp_xy.push(newxy);
-    // }
-    
-    //이제 temp_xy는 모든 date들을 다 포함하는, XY 배열이다.
-    //이녀석이 근본적으로 모든 놈들의 탬플릿이 된다.
-    console.log(temp_dates);
-    data.map((d,index)=>{
-      let temp_temp_xy : XY[] = [];
-      
-      
-      temp_dates.map((td,td_index)=>{
-        console.log(d);
-        console.log(td);
-        let flag=true;
-        console.log(flag);
-        d.data.map((xy,index)=>{
-          
-          if(xy.x===td)
-          {
-            flag=false;
-            temp_temp_xy.push({x:td,y:xy.y});
+    //이제 temp_temp_xy라는 급하게 만든 XY 배열을 만든다.
+    //x축은 무조건 temp_dates이고, y축은 data들을 보면서 있는 놈은 현재 값을 넣고 없는 놈은 null을 넣어야 한다.
+    data.map((d, index) => {
+      let temp_temp_xy: XY[] = [];
+
+      temp_dates.map((td, td_index) => {
+        let flag = true;
+        d.data.map((xy, index) => {
+          if (xy.x === td) {
+            flag = false;
+            temp_temp_xy.push({ x: td, y: xy.y });
           }
-          
-        })
-        console.log(flag);
-        flag && temp_temp_xy.push(
-          {x:td,y:null}
-        )
-      })
-      
-      d.data=temp_temp_xy.slice();
-      temp_temp_xy.splice(0,temp_temp_xy.length);
-    })
-
-    console.log(data);
-
+        });
+        flag && temp_temp_xy.push({ x: td, y: null });
+      });
+      //이제 data에는 새롭게 수정된 xy배열을 넣는다.
+      d.data = temp_temp_xy.slice();
+      //혹시 모르니(복잡한 포인터 문제) temp_temp_xy는 일부러 값도 완전히 초기화를 해준다.
+      temp_temp_xy.splice(0, temp_temp_xy.length);
+    });
     return data;
 }
 
-const MyResponsiveLine = ({ data } : any) => (
-    <ResponsiveLine
+const MyResponsiveLine = ({ data,linearorpoint } : any) => {
+  let xScale:any={};
+  if(linearorpoint==='linear' && data)
+  {
+    xScale = {
+      type: "point",
+      min:'auto',
+    };
+  }
+  else{
+    xScale={
+      type:'point',
+    }
+  }
+    
+  return (<ResponsiveLine
         data={data}
         margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
-        xScale={{ type: 'point' }}
+        xScale={xScale}
+        //xFormat="time:%Y-%m-%d"
         yScale={{
             type: 'linear',
             min: 'auto',
@@ -216,26 +233,28 @@ const MyResponsiveLine = ({ data } : any) => (
             }
         ]}
     />
-)
+    );
+      }
 
 //dayorhour -> false가 기본값, 시간 데이터.
-export default function Chart({datesandvalue,dayorhour,zero } : ChartProperty)
+export default function Chart({datesandvalue,dayorhour,zero,second} : ChartProperty)
 {
     const [nothingtoshow, setNothingToShow] =useState<boolean>(true);
     const [data, setData]=useState<chartform[]>([]);
     useEffect(()=>{
-      setData(zero ? [] : convertdata(datesandvalue,dayorhour));
-    },[datesandvalue]);
+      setData(zero ? [] : convertdata(datesandvalue,dayorhour,second));
+    },[datesandvalue,dayorhour]);
+
     useEffect(()=>{
-      
+      console.log(data);
       (zero || data.length===0) ? setNothingToShow(true) : setNothingToShow(false);
       
-    console.log(data);
+    //console.log(data);
     },);
 
     return (
       <>
-        {nothingtoshow ? (<div className="flex flex-col justify-center items-center" ><EmojiSadIcon className="w-10 h-10"/><p className="text-center text-sm">데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를 새롭게 지정하세요.</p></div>) : <MyResponsiveLine data={data}/>}
+        {nothingtoshow ? (<div className="flex flex-col justify-center items-center" ><EmojiSadIcon className="w-10 h-10"/><p className="text-center text-sm">데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를 새롭게 지정하세요.</p></div>) : <MyResponsiveLine data={data} linearorpoint={second ? "linear" : "point"}/>}
         </>
     );
 }

@@ -1,3 +1,4 @@
+import { OneGpsState } from "../../redux/forgps_slices";
 import { datesandvalue } from "./TypesMachine";
 import { WhatToShowProperty } from "./TypesWhatToShowProperty";
 
@@ -13,4 +14,5 @@ export interface GraphProperty{
     WhatToShowProperty: WhatToShowProperty,
     handlepub_date:(gte : Date, lte : Date)=>void,
     loading:boolean,
+    onegpsstate:OneGpsState,
 }

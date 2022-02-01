@@ -81,13 +81,14 @@ export default function Graph({
       setSecondloading(false);
     }
   }
-  useEffect(() => {
-    //as EventListener를 주의할 것.
-    window.addEventListener('resize',resizeHandler );
-    return () => {
-        window.removeEventListener('resize',resizeHandler);
-    };
-}, []);
+//   useEffect(() => {
+//     //as EventListener를 주의할 것.
+//좋은 시도이긴 했는데 해보니 모바일에서 너무 자주 loading이 된다.
+//     window.addEventListener('resize',resizeHandler );
+//     return () => {
+//         window.removeEventListener('resize',resizeHandler);
+//     };
+// }, []);
 
 useEffect(()=>{
     // console.log(id);

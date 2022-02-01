@@ -71,12 +71,12 @@ export default function Cards({
   return (
     <div className="grow grid grid-rows-6 grid-cols-10 h-screen border-y animate-fade-in-down duration-300 ">
       <div className="row-start-1 row-end-7 col-start-1 col-end-3"></div>
-      <div className="row-start-1 row-end-2 col-start-3 col-end-9 grid">
+      <div className="overflow-auto row-start-1 row-end-2 col-start-3 col-end-9 grid">
         <div className="self-stretch grid grid-rows-3 justify-items-stretch items-center">
-          <div className="row-start-1 row-end-3  flex justify-between">
+          <div className="row-start-1 row-end-3  flex flex-wrap justify-between">
             <div
               title="현재 목록에서 삭제"
-              className="w-fit h-5 self-center cursor-pointer flex duration-300 hover:scale-110"
+              className="w-fit h-5 self-center cursor-pointer flex duration-300 hover:scale-110 ml-3"
               onClick={() => {
                 handlemachinesselected([Machine.id], false);
               }}
@@ -113,7 +113,7 @@ export default function Cards({
               onClick={() => {
                 setmap(!map);
               }}
-              className="w-10 h-10 cursor-pointer duration-300 hover:scale-110"
+              className="w-10 h-10 cursor-pointer duration-300 hover:scale-110 mr-3"
             >
               {!map ? (
                 !mapiconmouseon ? (
@@ -128,7 +128,7 @@ export default function Cards({
               )}
             </div>
           </div>
-          <div className="row-start-3 row-end-4 flex flex-row justify-between items-center">
+          <div className="row-start-3 row-end-4 flex flex-row md:justify-between items-center flex-wrap">
             <div className="flex flex-row justify-items-start">
               {Machine.user && (
                 <>
@@ -150,7 +150,7 @@ export default function Cards({
               
               <div
                 title="엑셀(.xlsx) 파일 다운로드"
-                className="h-5 w-5 duration-300 hover:scale-125 cursor-pointer"
+                className="h-5 w-5 duration-300 hover:scale-125 cursor-pointer mr-1"
                 onMouseOver={() => {
                   setdownloadiconmouseon(true);
                 }}
@@ -207,7 +207,8 @@ export default function Cards({
         WhatToShowProperty={WhatToShowProperty}
         loading={loading}
       />
-      <div className="row-start-6 row-end-7 col-start-2 col-end-10 flex flex-wrap flex-row justify-start content-center items-center">
+      {/* 이 밑의 overflow 제어 부분 주목. 저렇게 해야 온전히 다 스크롤 박스 안에 표현됨. */}
+      <div className="overflow-scroll mb-1  mt-3 row-start-6 row-end-7 col-start-2 col-end-10 flex flex-wrap flex-row justify-start content-center items-center">
         {ListOfWhatToShowProperty.map(
           (whattoshowproperty: string, index: number) => {
             return (
@@ -219,7 +220,7 @@ export default function Cards({
                     ((buttonsrefs.current as HTMLDivElement[])[index] =
                       el as HTMLDivElement)
                   }
-                  className="animate-fade-in-down bg-green-700 mt-2 ml-1 rounded-lg w-fit h-fit cursor-pointer text-center leading-loose text-sm text-white whitespace-pre hover:scale-105 hover:opacity-60 "
+                  className=" animate-fade-in-down bg-green-700 mt-2 ml-1 rounded-lg w-fit h-fit cursor-pointer text-center leading-loose text-xs md:text-sm text-white whitespace-pre hover:scale-105 hover:opacity-60 "
                   onClick={async () => {
                     // refs.current[index]?.classList.remove('animate-fade-in-down')
                     // refs.current[index]?.classList.add('opacity-100')

@@ -86,9 +86,6 @@ export default function Map( {onegpsstate,datesandvalue } : MapProperty)
     //이 두 gps_date는 각각 gte,lte가 되어서 datesandvalue에서 filter를 이용하여 그 사이 값을 각각의 항목에 대해 추출하여, content에 저장한다.
     // content들은 다시 더 큰 contents에 묶인다. 언제? 데이터가 생성될때.
     
-    
-    
-    console.log(onegpsstate);
 
     return (
       <div style={{ display: "flex", height: "100%" }}>
@@ -145,6 +142,8 @@ const MyMapComponent : React.FC<MyMapComponent>=({
     const [positions, setpositions] = useState<google.maps.LatLng[]>([]);
     //let positions : google.maps.LatLng[] = [];
     const [titles,settitles]=useState<string[]>([]);
+
+
     useEffect(() => {
       let temp_contents: any[] = [];
       // let temp_positions:latlng[]=[];

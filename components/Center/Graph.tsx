@@ -109,13 +109,14 @@ function sleep(ms : number) {
 
   return (
     <div
+    title="클릭하여 확대하기"
       className={
-        " rounded-lg w-full justify-self-stretch bg-slate-300 row-start-2 row-end-6 col-start-3 col-end-9  transition ease-in-out "
-      }
+        " rounded-lg w-full justify-self-stretch bg-slate-300 row-start-2 row-end-6 col-start-3 col-end-9  transition ease-in-out overflow-auto " //이거 md랑 sm 속성이 먹히려면 sm 속성을 sm안붙이고 지정한 다음 md 속성에 원하는 걸 넣어야 하나보다.
+      +(screengraph ? " overflow-visible " : " overflow-y-auto ")}
     >
       <div className="flex flex-col h-full">
-        <div className=" w-full h-fit flex  justify-between justify-items-center items-center">
-          <div className="w-fit">
+        <div className=" w-full h-fit flex flex-wrap justify-between justify-items-center items-center">
+          <div className="w-fit ml-2">
             <DatePicker
               selectsRange={true}
               startDate={dateRange[0]}
@@ -127,19 +128,21 @@ function sleep(ms : number) {
               customInput={<CalendarInput />}
               onChange={(update: any) => {
                 setDateRange(update);
+                update[0] && update[1] && console.log("onChange");
 
                 update[0] && update[1] && handlepub_date(update[0], update[1]);
               }}
             />
           </div>
-          <div className="flex">
+          <div className="flex flex-wrap">
             <div
               title="컴퓨터 렉 주의"
-              className={(second ? "bg-slate-500 text-white mr-1" : " bg-inherit text-inherit ")+
+              className={
+                (second
+                  ? "bg-slate-500 text-white mr-1"
+                  : " bg-inherit text-inherit ") +
                 " rounded-full  self-center flex justify-center items-center duration-300 h-8  " +
-                (ismap
-                  ? "cursor-default"
-                  : " hover:shadow-md cursor-pointer")
+                (ismap ? "cursor-default" : " hover:shadow-md cursor-pointer")
               }
               onMouseOver={() => {
                 !ismap && setMouseoncautionicon(true);
@@ -159,16 +162,15 @@ function sleep(ms : number) {
               ) : (
                 <ExclamationIcon className="w-5 h-5" />
               )}
-              <p className="text-sm">
-                &nbsp;Second &nbsp;
-              </p>
+              <p className="text-sm">&nbsp;Second &nbsp;</p>
             </div>
             <div
-              className={(!dayorhour && !second ? "bg-slate-500 text-white ml-1 mr-1" : " bg-inherit text-inherit " )+
+              className={
+                (!dayorhour && !second
+                  ? "bg-slate-500 text-white ml-1 mr-1"
+                  : " bg-inherit text-inherit ") +
                 " flex justify-center items-center w-fit h-8 rounded-full duration-300 text-sm " +
-                (ismap
-                  ? " cursor-default "
-                  : " hover:shadow-md cursor-pointer")
+                (ismap ? " cursor-default " : " hover:shadow-md cursor-pointer")
               }
               onClick={async () => {
                 !ismap && setdayorhour(false);
@@ -181,13 +183,14 @@ function sleep(ms : number) {
               {"\u00a0\u00a0Hour\u00a0\u00a0 "}
             </div>
             <div
-              className={(dayorhour && !second ? "bg-slate-500 text-white ml-1" : " bg-inherit text-inherit " )+
+              className={
+                (dayorhour && !second
+                  ? "bg-slate-500 text-white ml-1"
+                  : " bg-inherit text-inherit ") +
                 " flex justify-center items-center w-fit h-8 rounded-full duration-300 text-sm " +
-                (ismap
-                  ? " cursor-default "
-                  : " hover:shadow-md cursor-pointer")
+                (ismap ? " cursor-default " : " hover:shadow-md cursor-pointer")
               }
-              onClick={async() => {
+              onClick={async () => {
                 !ismap && setdayorhour(true);
                 !ismap && setsecond(false);
                 !ismap && setSecondloading(true);
@@ -199,12 +202,15 @@ function sleep(ms : number) {
             </div>
           </div>
         </div>
+        {/* 저기서 grid가 아니라 flex로 하면, google map이 아예 안 그려지는 사건이 발생하니 주의!!! flex는 자체적인 width가 없음!!*/}
         <div
           className={
-            "grow grid grid-cols-1 bg-white rounded-lg cursor-pointer duration-300 border " +
+            "grow grid grid-cols-1 bg-white rounded-lg cursor-pointer duration-300 border justify-content-center min-w-[30rem] max-h-full" +
             (screengraph
               ? " scale-150 sm:shadow-all_height md:shadow-all_width z-[100]"
-              : !ismap && " hover:shadow-lg hover:scale-105")
+              : !ismap
+              ? " "//" hover:drop-shadow-lg hover:scale-95"
+              : " ")
           }
           onClick={() => {
             !ismap && setscreengraph(!screengraph);

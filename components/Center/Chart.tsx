@@ -187,7 +187,6 @@ const MyResponsiveLine = ({ second, data,linearorpoint } : any) => {
       type:'point',
     }
   }
-  console.log(second);
   
     
   return (<ResponsiveLine
@@ -282,11 +281,15 @@ export default function Chart({datesandvalue,dayorhour,zero,second} : ChartPrope
     return (
       <>
         {nothingtoshow ? (
-          <div className="flex flex-col justify-center items-center">
+          <div className="flex flex-col justify-center items-center h-full content-center">
             <EmojiSadIcon className="w-10 h-10" />
             <p className="text-center text-sm">
               데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를
               새롭게 지정하세요.
+            </p>
+            <p>-</p>
+            <p className="text-center text-xs">
+              ...혹은, 대량의 데이터가 브라우저에서 렌더링중입니다. 잠시 기다려주세요 :)
             </p>
           </div>
         ) : (

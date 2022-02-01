@@ -10,13 +10,13 @@ export interface HandleWhatToShowProperty{
 export default function BigLeftSideBar({handlewhattoshowproperty, whattoshowproperty} :  HandleWhatToShowProperty) {
 
   return (
-    <div className="sticky top-0 left-0 h-screen overflow-auto grid grid-cols-1 w-full justify-items-stretch border border-white">
+    <div className="sticky top-0 left-0 h-screen overflow-scroll grid grid-cols-1 w-full justify-items-stretch border border-white">
 
       {ListOfWhatToShowProperty.map((whattoshow: string, index: React.Key) => (
         <div
           key={index}
           className={
-            "cursor-pointer translate duration-200 " +
+            "cursor-pointer translate duration-200 h-min-[80px] h-max-full " +
       (whattoshowproperty[whattoshow]
         ? "bg-green-500 "
         : "bg-green-800 hover:bg-green-600 ")

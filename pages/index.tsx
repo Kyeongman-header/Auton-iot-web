@@ -457,7 +457,7 @@ if(lestids.length===0 && y===false)
         }}
         className={
           "grow-0 w-20 transition-all ease-in-out duration-300 " +
-          (ExpandLeftSideBar ? " w-3/12" : "")
+          (ExpandLeftSideBar ? " w-[25rem]" : "")
         }
       >
         {/*여기서 이거를 onMouseOver로 하면 이상하게 튕김현상이 일어나니 주의... 무지 헤맴 ㅠㅠ*/}
@@ -486,7 +486,7 @@ if(lestids.length===0 && y===false)
         ref={refright}
         className={
           "grow-0  w-20 transition-all ease-in-out duration-300" +
-          (ExpandRightSideBar ? " w-3/12" : "")
+          (ExpandRightSideBar ? " w-[25rem]" : "")
         }
         onClick={() => {
           setExpandRightSideBar(true);

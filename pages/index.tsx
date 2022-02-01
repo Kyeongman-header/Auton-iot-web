@@ -550,7 +550,7 @@ export const getStaticProps :GetStaticProps=async(context)=> {
   }
   catch(e)
   {
-
+    console.log(e);
   }
   
   //console.log(context.store);

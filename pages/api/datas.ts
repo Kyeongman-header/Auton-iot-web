@@ -8,7 +8,8 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  const data = await fetch(
+  try{
+    const data = await fetch(
     `http://auton-iot.com/api/${req.query.sort}/?pub_date__gte=${req.query.pub_date__gte}&pub_date__lte=${req.query.pub_date__lte}&machine=${req.query.machine}`,
     {
       method: 'GET',
@@ -18,6 +19,11 @@ export default async function handler(
       }
     }
   ).then(response => response.json());
-
   res.json(data); // Send the response
+  }
+  catch(e){
+   console.log("backend error");
+  }
+
+  
 }

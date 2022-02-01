@@ -246,7 +246,6 @@ export default function Chart({datesandvalue,dayorhour,zero,second} : ChartPrope
     },[datesandvalue,dayorhour]);
 
     useEffect(()=>{
-      console.log(data);
       (zero || data.length===0) ? setNothingToShow(true) : setNothingToShow(false);
       
     //console.log(data);

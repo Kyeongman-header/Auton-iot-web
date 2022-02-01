@@ -187,139 +187,146 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       //반복문 안에서 fetch등이 있어서 async이면 이 반복문 자체가 끝나기를 안 기다리고 그냥 넘어간다.
       //따라서 반복문 바깥에서 setState를 하는 것은 의미가 없어진다.
       //그것을 방지하기 위해 이와 같은 await Promise.all구문을 써줘야 한다!!!!!!!!!
-      let temp=await Promise.all(selections.map(async (selection,index)=>{
+      try{
+        let temp=await Promise.all(selections.map(async (selection,index)=>{
 
-      let pub_date__gte=gte ? gte : pub_date[0];
-      let pub_date__lte=lte ? lte : pub_date[1];
-      
-      // console.log("get data from api");
-      // console.log(pub_date__gte);
-      // console.log(pub_date__lte);
-
-      //새롭게 showmachine에 추가해줄 머신들의 기본 drawable 배열의 초기값(name)들을 세팅해준다.
-      let initialdrawable:datesandvalue[]=[];
-      ListOfWhatToShowProperty.map((listofwhattoshowproperty,list_index)=>{
-          initialdrawable.push({name : listofwhattoshowproperty, dates : [], values : []});
+          let pub_date__gte=gte ? gte : pub_date[0];
+          let pub_date__lte=lte ? lte : pub_date[1];
+          
+          // console.log("get data from api");
+          // console.log(pub_date__gte);
+          // console.log(pub_date__lte);
+    
+          //새롭게 showmachine에 추가해줄 머신들의 기본 drawable 배열의 초기값(name)들을 세팅해준다.
+          let initialdrawable:datesandvalue[]=[];
+          ListOfWhatToShowProperty.map((listofwhattoshowproperty,list_index)=>{
+              initialdrawable.push({name : listofwhattoshowproperty, dates : [], values : []});
+          });
+    
+          //인덱스를 찾긴 찾아야 한다.
+          let newindex =-1;
+          machines.map((machine,index)=>{machine.id===selection && (newindex=index)})
+    
+          let newmachine: Machine = {
+            ...machines[newindex],//drawable과 gps 데이터가 비어있는 현재 machine list의 특정 index를 추가해준다.
+            drawable: initialdrawable,
+            gps: [],
+            gps_dates : [],
+          };
+          // console.log('here');
+          // console.log(pub_date__gte);
+          // console.log(pub_date__lte);
+          // console.log(selection);
+          // console.log(machines);
+      const sensor = await fetch(
+        `/api/datas?sort=sensor&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
+          selection
+        }`,
+      );
+    //['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+      let tempdatas = await sensor.json();
+      tempdatas!.map((tempdata: any,temp_index : number)=>{
+          let dates : string=convertDateFormatString(tempdata.pub_date);
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].values.push(tempdata.sensor.CO2);
+          // newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(tempdata.pub_date);
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(dates)
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].values.push(tempdata.sensor.humidity);
+          // newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(tempdata.pub_date);
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(dates)
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].values.push(tempdata.sensor.temperature);
+          // newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(tempdata.pub_date);
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(dates)
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].values.push(tempdata.sensor['P.M 2.5']);
+          // newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(tempdata.pub_date);
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(dates)
       });
-
-      //인덱스를 찾긴 찾아야 한다.
-      let newindex =-1;
-      machines.map((machine,index)=>{machine.id===selection && (newindex=index)})
-
-      let newmachine: Machine = {
-        ...machines[newindex],//drawable과 gps 데이터가 비어있는 현재 machine list의 특정 index를 추가해준다.
-        drawable: initialdrawable,
-        gps: [],
-        gps_dates : [],
-      };
-      // console.log('here');
-      // console.log(pub_date__gte);
-      // console.log(pub_date__lte);
-      // console.log(selection);
-      // console.log(machines);
-  const sensor = await fetch(
-    `/api/datas?sort=sensor&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
-      selection
-    }`,
-  );
-//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
-  let tempdatas = await sensor.json();
-  tempdatas!.map((tempdata: any,temp_index : number)=>{
-      let dates : string=convertDateFormatString(tempdata.pub_date);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].values.push(tempdata.sensor.CO2);
-      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(tempdata.pub_date);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO2")].dates.push(dates)
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].values.push(tempdata.sensor.humidity);
-      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(tempdata.pub_date);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("HUMIDITY")].dates.push(dates)
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].values.push(tempdata.sensor.temperature);
-      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(tempdata.pub_date);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("TEMPERATURE")].dates.push(dates)
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].values.push(tempdata.sensor['P.M 2.5']);
-      // newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(tempdata.pub_date);
-      newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(dates)
-  });
-  
-
-  const airkorea = await fetch(
-      `/api/datas?sort=airkorea&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
-        selection
-      }`,
-    );
-//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
-    let tempdatas_2 = await airkorea.json();
-    tempdatas_2.map((tempdata: any,temp_index : number)=>{
-      let dates : string=convertDateFormatString(tempdata.pub_date).slice();
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].values.push(tempdata.airkorea.khai);
-        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(tempdata.pub_date);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(dates)
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].values.push(tempdata.airkorea['P.M 2.5']);
-        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(tempdata.pub_date);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(dates)
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].values.push(tempdata.airkorea.CO);
-        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(tempdata.pub_date);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(dates)
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].values.push(tempdata.airkorea.SO2);
-        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(tempdata.pub_date);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(dates)
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].values.push(tempdata.airkorea.NO2);
-        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(tempdata.pub_date);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(dates)
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].values.push(tempdata.airkorea.O3);
-        //newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(tempdata.pub_date);
-        newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(dates)
-    });
-
-    const gps = await fetch(
-      `/api/datas?sort=gps&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
-        selection
-      }`,
-    );
-//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
-    let tempdatas_3 = await gps.json();
-    tempdatas_3.map((tempdata: any,temp_index : number)=>{
-      let dates : string=convertDateFormatString(tempdata.pub_date);
-        newmachine.gps.push(tempdata.gps);
-        newmachine.gps_dates.push(dates);
-        
-    });
-
-
-    //위의 굉장한 코드들을 거치면 newmachine에 새로운 machine 하나가 추가된다.
-    if (modify) {
-      showmachine.map((sm, index) => {
-        if (sm.id === selection) {
-          temp_showmachine.splice(index, 1);
-          dispatch(removeGpsSlices(selection));
-          temp_showmachine.splice(index, 0, newmachine);
+      
+    
+      const airkorea = await fetch(
+          `/api/datas?sort=airkorea&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
+            selection
+          }`,
+        );
+    //['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+        let tempdatas_2 = await airkorea.json();
+        tempdatas_2.map((tempdata: any,temp_index : number)=>{
+          let dates : string=convertDateFormatString(tempdata.pub_date).slice();
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].values.push(tempdata.airkorea.khai);
+            //newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(tempdata.pub_date);
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(dates)
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].values.push(tempdata.airkorea['P.M 2.5']);
+            //newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(tempdata.pub_date);
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(dates)
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].values.push(tempdata.airkorea.CO);
+            //newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(tempdata.pub_date);
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(dates)
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].values.push(tempdata.airkorea.SO2);
+            //newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(tempdata.pub_date);
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("SO2")].dates.push(dates)
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].values.push(tempdata.airkorea.NO2);
+            //newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(tempdata.pub_date);
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("NO2")].dates.push(dates)
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].values.push(tempdata.airkorea.O3);
+            //newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(tempdata.pub_date);
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("O3")].dates.push(dates)
+        });
+    
+        const gps = await fetch(
+          `/api/datas?sort=gps&pub_date__gte=${pub_date__gte}&pub_date__lte=${pub_date__lte}&machine=${
+            selection
+          }`,
+        );
+    //['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+        let tempdatas_3 = await gps.json();
+        tempdatas_3.map((tempdata: any,temp_index : number)=>{
+          let dates : string=convertDateFormatString(tempdata.pub_date);
+            newmachine.gps.push(tempdata.gps);
+            newmachine.gps_dates.push(dates);
+            
+        });
+    
+    
+        //위의 굉장한 코드들을 거치면 newmachine에 새로운 machine 하나가 추가된다.
+        if (modify) {
+          showmachine.map((sm, index) => {
+            if (sm.id === selection) {
+              temp_showmachine.splice(index, 1);
+              dispatch(removeGpsSlices(selection));
+              temp_showmachine.splice(index, 0, newmachine);
+              let mapgps = gpstomapgps(newmachine.gps,newmachine.gps_dates);
+    
+              dispatch(
+                addGpsSlices({
+                  gps: mapgps,
+                  datesandvalue: newmachine.drawable,
+                  id: sm.id,
+                })
+              );
+            }
+          });
+        } else {
+          add_showmachine.push(newmachine);
           let mapgps = gpstomapgps(newmachine.gps,newmachine.gps_dates);
-
           dispatch(
             addGpsSlices({
               gps: mapgps,
               datesandvalue: newmachine.drawable,
-              id: sm.id,
+              id: selection
             })
           );
         }
-      });
-    } else {
-      add_showmachine.push(newmachine);
-      let mapgps = gpstomapgps(newmachine.gps,newmachine.gps_dates);
-      dispatch(
-        addGpsSlices({
-          gps: mapgps,
-          datesandvalue: newmachine.drawable,
-          id: selection
-        })
-      );
-    }
+          
+          }))
+          
+          setLoading(false);
+          setAddLoading(false);
+          modify ? setshowmachine(temp_showmachine) : setshowmachine((showmachine) => [...showmachine,  ...add_showmachine ]);
+
+      }
+      catch(e){
+        console.log("backend error.");
+      }
       
-      }))
-      
-      setLoading(false);
-      setAddLoading(false);
-      modify ? setshowmachine(temp_showmachine) : setshowmachine((showmachine) => [...showmachine,  ...add_showmachine ]);
       
 };
 
@@ -506,7 +513,11 @@ if(lestids.length===0 && y===false)
 
 export default Home;
 export const getStaticProps :GetStaticProps=async(context)=> {
-  const machine_list = await fetch( `http://auton-iot.com/api/machine/`,
+  let tempMachines : Machine[] = [] as Machine[];
+  let selectedids: string[] =[];
+  
+  try{
+    const machine_list = await fetch( `http://auton-iot.com/api/machine/`,
   {
     method: 'GET',
     headers:{
@@ -517,14 +528,6 @@ export const getStaticProps :GetStaticProps=async(context)=> {
   );
   
   let tempdatas = await machine_list.json();
-  
-  //console.log(context.store);
-//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
-  let tempMachines : Machine[] = [] as Machine[];
-  let selectedids: string[] =[];
-  
-  
-  
   
   tempdatas.map((tempdata:any,index:number)=>{
     let tempMachine : Machine = {} as Machine;
@@ -544,6 +547,18 @@ export const getStaticProps :GetStaticProps=async(context)=> {
     tempMachine.selected && selectedids.push(tempMachine.id);
   })
 
+  }
+  catch(e)
+  {
+
+  }
+  
+  //console.log(context.store);
+//['KHAI','PM25_2','CO','SO2','NO2','O3','PM25','TEMPERATURE','HUMIDITY','CO2'];
+  
+  
+  
+  
 
     return {
       props: {

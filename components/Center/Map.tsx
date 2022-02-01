@@ -12,9 +12,9 @@ import { datesandvalue } from '../Types/TypesMachine';
 const deepCompareEqualsForMaps = createCustomEqual(
     (deepEqual) => (a: any, b: any) => {
       if (
-        isLatLngLiteral(a) ||
+        //isLatLngLiteral(a) || //예시 코드에서 자체적으로 deep compare를 위해 만든 hook인데, isLatLngLiteral이라는 함수에서 자꾸 요상한 오류가 난다. 그냥 주석 처리하였다.
         a instanceof google.maps.LatLng ||
-        isLatLngLiteral(b) ||
+        //isLatLngLiteral(b) ||
         b instanceof google.maps.LatLng
       ) {
         return new google.maps.LatLng(a).equals(new google.maps.LatLng(b));
@@ -86,70 +86,9 @@ export default function Map( {onegpsstate,datesandvalue } : MapProperty)
     //이 두 gps_date는 각각 gte,lte가 되어서 datesandvalue에서 filter를 이용하여 그 사이 값을 각각의 항목에 대해 추출하여, content에 저장한다.
     // content들은 다시 더 큰 contents에 묶인다. 언제? 데이터가 생성될때.
     
-    const [contents,setcontents] =useState<any[]>([]);
-    const [positions,setpositions] =useState<latlng[]>([]);
-    //let positions : google.maps.LatLng[] = [];
-    const [titles,settitles]=useState<string[]>([]);
-    useEffect(()=>{
-      let temp_contents:any[]=[];
-      let temp_positions:latlng[]=[];
-      let temp_titles:string[]=[];
-      if(onegpsstate.gps.length!==0 && datesandvalue.length!==0){
-        let nowlatlng=onegpsstate.gps[0].latlng;
-        let gte=onegpsstate.gps[0].gps_date;
-        let lte="";
-        let content : string[]=[];
-        for(let onegpsstategpsindex=0;onegpsstategpsindex<onegpsstate.gps.length;onegpsstategpsindex++)
-        {
-          lte=onegpsstate.gps[onegpsstategpsindex].gps_date;
-          if (
-            Math.abs(
-              nowlatlng.lat - onegpsstate.gps[onegpsstategpsindex].latlng.lat
-            ) >= 0.005 ||
-            Math.abs(
-              nowlatlng.lng - onegpsstate.gps[onegpsstategpsindex].latlng.lng
-            ) >= 0.005 ||
-            onegpsstategpsindex === onegpsstate.gps.length - 1//마지막 요소일때.
-          ) {
-            
-            datesandvalue.map((dav, index) => {
-              let betweenvalues = dav.values.filter((value, index, array) => {
-                let date = new Date(dav.dates[index]).getTime();
-                return (
-                  date <= new Date(lte).getTime() && date >= new Date(gte).getTime()
-                );
-              });
     
-              let average: number = 0;
-              let count: number = 0;
-              betweenvalues.map((bv, index) => {
-                average = average + bv;
-                count++;
-              });
-              average = average / count;
-              content.push(dav.name + " : " + average.toString());
-            });
     
-            //데이터들을 추가해주는 장소이다.
-            temp_contents.push(content);
-            temp_positions.push({lat:nowlatlng.lat, lng:nowlatlng.lng});
-            //positions.push(new google.maps.LatLng(nowlatlng.lat, nowlatlng.lng));
-            temp_titles.push(gte + " ~ " + lte);
-    
-            //now와 gte를 현재의 latlng, 시간으로 바꿔주는 작업이다.
-            nowlatlng=onegpsstate.gps[onegpsstategpsindex].latlng;
-            gte = lte;
-            content=[];
-          }
-          
-        }
-      }
-      setcontents(temp_contents);
-      setpositions(temp_positions);
-      settitles(temp_titles);
-    },[onegpsstate,datesandvalue])
-    
-
+    console.log(onegpsstate);
 
     return (
       <div style={{ display: "flex", height: "100%" }}>
@@ -159,9 +98,8 @@ export default function Map( {onegpsstate,datesandvalue } : MapProperty)
             onClick={onClick}
             onIdle={onIdle}
             zoom={zoom}
-            titles={titles}
-            contents={contents as [string[]]}
-            positions={positions}
+            onegpsstate={onegpsstate}
+            datesandvalue={datesandvalue}
             style={{ flexGrow: "1", height: "100%" }}
           >
             {/* <Marker position={position} title={"marker1"} clickable={true} />
@@ -183,9 +121,8 @@ interface MyMapComponent extends google.maps.MapOptions {
   style: { [key: string]: string };
   onClick?: (e: google.maps.MapMouseEvent) => void;
   onIdle?: (map: google.maps.Map) => void;
-  titles : string[],
-  contents:[string[]],
-  positions: google.maps.LatLng[] | latlng[],
+  onegpsstate : OneGpsState,
+  datesandvalue : datesandvalue[],
 }
 
 const MyMapComponent : React.FC<MyMapComponent>=({
@@ -193,22 +130,89 @@ const MyMapComponent : React.FC<MyMapComponent>=({
   onIdle,
   children,
   style,
-  titles,
-  contents,
-  positions,
+  onegpsstate,
+  datesandvalue,
   ...options
 })=> {
   const ref = useRef<HTMLDivElement>(null);
   const [map, setMap] = React.useState<google.maps.Map>();
-  const [polyline,setPolyLine]=useState<google.maps.Polyline>();
+  const [polyline, setPolyLine] = useState<google.maps.Polyline>();
   const [marker, setMarker] = React.useState<google.maps.Marker[]>([]);
   const [infowindow,setInfoWindow] = useState<google.maps.InfoWindow[]>([]);
   const [contentStrings,setcontentStrings] =useState<string[]>([]);
+  const [contents,setcontents] =useState<any[]>([]);
+    // const [positions,setpositions] =useState<latlng[]>([]);
+    const [positions, setpositions] = useState<google.maps.LatLng[]>([]);
+    //let positions : google.maps.LatLng[] = [];
+    const [titles,settitles]=useState<string[]>([]);
+    useEffect(() => {
+      let temp_contents: any[] = [];
+      // let temp_positions:latlng[]=[];
+      let temp_positions: google.maps.LatLng[] = [];//google 네임스페이스의 녀석들은 map이 init되기 전에 new로 할당해서 쓰면 오류가 발생한다. 주의.
+      let temp_titles: string[] = [];
+      if (map && onegpsstate.gps.length !== 0 && datesandvalue.length !== 0) {
+        let nowlatlng = onegpsstate.gps[0].latlng;
+        let gte = onegpsstate.gps[0].gps_date;
+        let lte = "";
+        let content: string[] = [];
+        for (
+          let onegpsstategpsindex = 0;
+          onegpsstategpsindex < onegpsstate.gps.length;
+          onegpsstategpsindex++
+        ) {
+          lte = onegpsstate.gps[onegpsstategpsindex].gps_date;
+          if (
+            Math.abs(
+              nowlatlng.lat - onegpsstate.gps[onegpsstategpsindex].latlng.lat
+            ) >= 0.005 ||
+            Math.abs(
+              nowlatlng.lng - onegpsstate.gps[onegpsstategpsindex].latlng.lng
+            ) >= 0.005 ||
+            onegpsstategpsindex === onegpsstate.gps.length - 1 //마지막 요소일때.
+          ) {
+            datesandvalue.map((dav, index) => {
+              let betweenvalues = dav.values.filter((value, index, array) => {
+                let date = new Date(dav.dates[index]).getTime();
+                return (
+                  date <= new Date(lte).getTime() &&
+                  date >= new Date(gte).getTime()
+                );
+              });
+
+              let average: number = 0;
+              let count: number = 0;
+              betweenvalues.map((bv, index) => {
+                average = average + bv;
+                count++;
+              });
+              average = average / count;
+              content.push(dav.name + " : " + average.toString());
+            });
+
+            //데이터들을 추가해주는 장소이다.
+            temp_contents.push(content);
+            // temp_positions.push({lat:nowlatlng.lat, lng:nowlatlng.lng});
+            temp_positions.push(
+              new google.maps.LatLng(nowlatlng.lat, nowlatlng.lng)
+            );
+            temp_titles.push(gte + " ~ " + lte);
+
+            //now와 gte를 현재의 latlng, 시간으로 바꿔주는 작업이다.
+            nowlatlng = onegpsstate.gps[onegpsstategpsindex].latlng;
+            gte = lte;
+            content = [];
+          }
+        }
+      }
+      setcontents(temp_contents);
+      setpositions(temp_positions);
+      settitles(temp_titles);
+    }, [onegpsstate, datesandvalue,map]);
   
   useEffect(()=>{
     let temp_contentStrings=[];
     for(let index=0; index<titles.length; index++){
-      let nowcontents=contents[index].map((content,index)=>'<p>'+content+'</p>').join('\n')
+      let nowcontents=contents[index].map((content :any,index : number)=>'<p>'+content+'</p>').join('\n')
       let contentString='<div id="content">' +
       '<div id="siteNotice">' +
       "</div>" +
@@ -320,9 +324,19 @@ const MyMapComponent : React.FC<MyMapComponent>=({
       strokeWeight: 2,
       }));
     }
-  },[polyline]);
+    else if(polyline && positions){
+      polyline.setOptions({
+        path: positions,
+      geodesic: true,
+      strokeColor: "#FF0000",
+      strokeOpacity: 1.0,
+      strokeWeight: 2,
+      }
+      );
+    }
+  },[polyline,positions]);
 
-  useEffect(()=>{ 
+  useEffect(()=>{ //얘는 setMap으로 맵에 marker랑 polyline을 그려주는 놈이다. 무조건 모든 렌더링마다 다시 해줘야 한다.(dependency가 생기면 렌더링이 오히려 느려짐)
     polyline && map && polyline.setMap(map);
     marker && map && marker.map((m,index)=>m.setMap(map));
     return () => {

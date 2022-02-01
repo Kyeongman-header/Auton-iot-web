@@ -26,7 +26,7 @@ interface chartform{
 const colors = ["hsl(100, 5%, 5%)","hsl(111, 10%, 10%)","hsl(63, 15%, 15%)","hsl(130, 20%, 20%)","hsl(100, 25%, 25%)","hsl(100,30%,30%)","hsl(100,35%,35%)","hsl(100,40%,40%)","hsl(100,46%,46%)","hsl(100,78%,58%)"]
 function converter(dayorhour:boolean,now:Date)
 {
-  return dayorhour ? (now.getMonth()+1).toString()+"."+now.getDate().toString() : (now.getMonth()+1).toString()+"."+now.getDate().toString()+"/"+now.getHours().toString()+"h";
+  return dayorhour ? now.getFullYear().toString()+"-"+(now.getMonth()+1).toString()+"-"+now.getDate().toString() : now.getFullYear().toString()+"-"+(now.getMonth()+1).toString()+"-"+now.getDate().toString()+" "+now.getHours().toString()+"시";
 }
 
 function convertdata(datesandvalue : datesandvalue[], dayorhour : boolean,second:boolean){
@@ -55,7 +55,7 @@ function convertdata(datesandvalue : datesandvalue[], dayorhour : boolean,second
         if (
           dayorhour
             ? new Date(dav.dates[index]).getDate() !== now.getDate() || index===dav.dates.length-1
-            : new Date(dav.dates[index]).getHours() !== now.getHours() || index===dav.dates.length-1
+            : new Date(dav.dates[index]).getDate() !== now.getDate() || new Date(dav.dates[index]).getHours() !== now.getHours() || index===dav.dates.length-1
         ) {
           let time = converter(dayorhour, now);
           xy.push({ x: time, y: average });
@@ -99,6 +99,7 @@ function convertdata(datesandvalue : datesandvalue[], dayorhour : boolean,second
     temp_dates.sort(function (a, b) {
       // Turn your strings into dates, and then subtract them
       // to get a value that is either negative, positive, or zero.
+      let year="";
       let month="";
       let date="";
       let hour="";
@@ -111,17 +112,38 @@ function convertdata(datesandvalue : datesandvalue[], dayorhour : boolean,second
         newb = new Date(b);
       }
       else{
-      month = a.split(".")[0];
-      date = a.split(".")[1].split("/")[0];
-      hour = a.split(".")[1].split("/")[1].substring(0,a.split(".")[1].split("/")[1].length-1);
+      if(dayorhour)
+      {
+        year = a.split("-")[0];
+      month = a.split("-")[1];
+      date = a.split("-")[2];
+      
+
+      newa = new Date(year+"-" + month + "-" + date);
+
+      year = b.split("-")[0];
+      month = b.split("-")[1];
+      date = b.split("-")[2];
+      
+      newb = new Date(year+"-" + month + "-" + date);
+      }
+      else{
+        year = a.split(" ")[0].split("-")[0];
+      month = a.split(" ")[0].split("-")[1];
+      date = a.split(" ")[0].split("-")[2];
+      hour = a.split(" ")[1].substring(0,a.split(" ")[1].length-1);
+      
 
       newa = new Date("2022-" + month + "-" + date + " " + hour + ":00:00");
 
-      month = b.split(".")[0];
-      date = b.split(".")[1].split("/")[0];
-      hour = b.split(".")[1].split("/")[1].substring(0,b.split(".")[1].split("/")[1].length-1);
+      year = b.split(" ")[0].split("-")[0];
+      month = b.split(" ")[0].split("-")[1];
+      date = b.split(" ")[0].split("-")[2];
+      hour = b.split(" ")[1].substring(0,b.split(" ")[1].length-1);
       
       newb = new Date("2022-" + month + "-" + date + " " + hour + ":00:00");
+      }
+      
       }
       //시간까지 포함하여 정렬하려면 getDate가 아니라 getTime인 점 주의.
       return newa.getTime() - newb.getTime();
@@ -151,7 +173,7 @@ function convertdata(datesandvalue : datesandvalue[], dayorhour : boolean,second
     return data;
 }
 
-const MyResponsiveLine = ({ data,linearorpoint } : any) => {
+const MyResponsiveLine = ({ second, data,linearorpoint } : any) => {
   let xScale:any={};
   if(linearorpoint==='linear' && data)
   {
@@ -165,10 +187,12 @@ const MyResponsiveLine = ({ data,linearorpoint } : any) => {
       type:'point',
     }
   }
+  console.log(second);
+  
     
   return (<ResponsiveLine
         data={data}
-        margin={{ top: 50, right: 110, bottom: 50, left: 60 }}
+        margin={{ top: 50, right: 110, bottom: 80, left: 60 }}
         xScale={xScale}
         //xFormat="time:%Y-%m-%d"
         yScale={{
@@ -182,15 +206,19 @@ const MyResponsiveLine = ({ data,linearorpoint } : any) => {
         yFormat=" >-.2f"
         axisTop={null}
         axisRight={null}
-        // axisBottom={{
-        //     orient: 'bottom',
-        //     tickSize: 5,
-        //     tickPadding: 5,
-        //     tickRotation: 0,
-        //     legend: 'transportation',
-        //     legendOffset: 36,
-        //     legendPosition: 'middle'
-        // }}
+
+        //second인 경우 렌더링의 성능 저하가 극심하므로 쓸데없는 효과들은 빼준다.
+        animate={second? false : true}
+        isInteractive={second? false : true}
+        useMesh={second? false : true}
+        enablePoints={second? false:true}
+        enableGridX={second? false: true}
+        //enableGridY={second? false: true}
+        axisBottom={{
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: -68,
+        }}
         // axisLeft={{
         //     orient: 'left',
         //     tickSize: 5,
@@ -201,11 +229,12 @@ const MyResponsiveLine = ({ data,linearorpoint } : any) => {
         //     legendPosition: 'middle'
         // }}
         pointSize={10}
+        colors={{ scheme: 'category10' }}
         pointColor={{ theme: 'background' }}
         pointBorderWidth={2}
         pointBorderColor={{ from: 'serieColor' }}
         pointLabelYOffset={-12}
-        useMesh={true}
+        
         legends={[
             {
                 anchor: 'bottom-right',
@@ -253,7 +282,7 @@ export default function Chart({datesandvalue,dayorhour,zero,second} : ChartPrope
 
     return (
       <>
-        {nothingtoshow ? (<div className="flex flex-col justify-center items-center" ><EmojiSadIcon className="w-10 h-10"/><p className="text-center text-sm">데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를 새롭게 지정하세요.</p></div>) : <MyResponsiveLine data={data} linearorpoint={second ? "linear" : "point"}/>}
+        {nothingtoshow ? (<div className="flex flex-col justify-center items-center" ><EmojiSadIcon className="w-10 h-10"/><p className="text-center text-sm">데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를 새롭게 지정하세요.</p></div>) : <MyResponsiveLine second={second} data={data} linearorpoint={second ? "linear" : "point"}/>}
         </>
     );
 }

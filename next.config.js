@@ -5,15 +5,15 @@ headers={ Authorization : 'Token 005d516b38535a1e0b1acd0e0d61ed26d4dcb3cd'}
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // async redirects(){
-  //   return [
-  //     {
-  //       source:"/admin/:path*",
-  //       destination:"/",
-  //       permanent: false,
-  //     }
-  //   ]
-  // },
+  async redirects(){
+    return [
+      {
+        source:"/admin/:path*",
+        destination:"/",
+        permanent: false,
+      }
+    ]
+  },
   // async rewrites(){
   //   return [
   //     {

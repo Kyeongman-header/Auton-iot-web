@@ -517,7 +517,7 @@ export const getStaticProps :GetStaticProps=async(context)=> {
   let selectedids: string[] =[];
   
   try{
-    const machine_list = await fetch( `http://auton-iot.com/api/machine/`,
+    const machine_list = await fetch( `https://auton-iot.com/api/machine/`,
   {
     method: 'GET',
     headers:{
@@ -550,7 +550,7 @@ export const getStaticProps :GetStaticProps=async(context)=> {
   }
   catch(e)
   {
-
+    console.log(e);
   }
   
   //console.log(context.store);

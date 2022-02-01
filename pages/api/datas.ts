@@ -10,7 +10,7 @@ export default async function handler(
 ) {
   try{
     const data = await fetch(
-    `http://auton-iot.com/api/${req.query.sort}/?pub_date__gte=${req.query.pub_date__gte}&pub_date__lte=${req.query.pub_date__lte}&machine=${req.query.machine}`,
+    `https://auton-iot.com/api/${req.query.sort}/?pub_date__gte=${req.query.pub_date__gte}&pub_date__lte=${req.query.pub_date__lte}&machine=${req.query.machine}`,
     {
       method: 'GET',
       headers:{

@@ -69,7 +69,7 @@ export default function InfinityScrollCards({
   }
 
   return (
-    <div className="grow flex flex-col min-h-[250vh] md:min-h-[200vh] lg:min-h-[100vh] h-full">
+    <div className="grow grid min-h-[800pt] ">
       {Machines.map((machine, index) => {
          return addloading&&index===(Machines.length-1) ? (
            <div

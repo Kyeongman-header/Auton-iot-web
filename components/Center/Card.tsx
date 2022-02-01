@@ -69,7 +69,7 @@ export default function Cards({
  
   const [map, setmap] = useState<boolean>(false);
   return (
-    <div className="grow grid grid-rows-6 grid-cols-10 h-screen border-y animate-fade-in-down duration-300 ">
+    <div className="grow grid grid-rows-6 grid-cols-10 h-full border-y animate-fade-in-down duration-300 ">
       <div className="row-start-1 row-end-7 col-start-1 col-end-3"></div>
       <div className="overflow-auto row-start-1 row-end-2 col-start-3 col-end-9 grid">
         <div className="self-stretch grid grid-rows-3 justify-items-stretch items-center">

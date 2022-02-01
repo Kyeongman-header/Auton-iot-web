@@ -469,7 +469,7 @@ if(lestids.length===0 && y===false)
     // 이를 위해 grid col =1 row =1 짜리를 적용해서 한칸짜리 그리드를 채워놓으면 된다.
     // flutter의 Container나 SizedBox가 따로 없다. 전부 grid 아니면 flex로 직접 채워넣어놔야 한다.
 
-    <div className="grow flex flex-row justify-between bg-white w-screen h-fit justify-items-stretch gap-0">
+    <div className="grow flex flex-row justify-between bg-white w-full h-full justify-items-stretch gap-0 items-stretch">
       <div
         ref={refleft}
         onClick={() => {

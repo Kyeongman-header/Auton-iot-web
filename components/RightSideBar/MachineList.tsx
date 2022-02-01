@@ -29,7 +29,7 @@ export default function MachineList({machines,handlemachinesselected,selectedall
         }
         {
         searched_machines.map((machine : Machine,index : number) : JSX.Element =>(
-            <div key={index} className={"h-[8rem] min-w-[20rem] "+(machine.selected ? " bg-green-500 " : "bg-green-800 hover:bg-green-600") + " cursor-pointer text-white grid grid-rows-2 grid-cols-10"}
+            <div key={index} className={"h-fit min-w-[20rem] "+(machine.selected ? " bg-green-500 " : "bg-green-800 hover:bg-green-600") + " cursor-pointer text-white grid grid-rows-2 grid-cols-10"}
             onClick={()=>{handlemachinesselected([machine.id],!machine.selected)}}>
             <p className="ml-2 col-span-4 text-xs">{ `${machine.id}` } </p>
             <p className="col-span-3">{machine.car_number ? `${machine.car_number}` : "-"}</p>

@@ -27,7 +27,7 @@ export default function Navigation()
   
   
   return (
-      <div className="flex flex-col flex-between w-screen h-fit  bg-white">
+      <div className="flex flex-col flex-between w-full h-fit  bg-white">
         {/* <div className="w-full flex flex-row justify-between">
           <div className="translate-y-2 translate-x-2">
             {login ? (

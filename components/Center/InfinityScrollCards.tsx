@@ -69,12 +69,12 @@ export default function InfinityScrollCards({
   }
 
   return (
-    <div className="grow flex flex-col h-fit">
+    <div className="grow flex flex-col min-h-[250vh] md:min-h-[200vh] lg:min-h-[100vh] h-full">
       {Machines.map((machine, index) => {
          return addloading&&index===(Machines.length-1) ? (
            <div
              key={index}
-             className="justify-self-center self-center h-screen w-[500px] flex flex-col justify-center items-center animate-pulse"
+             className="justify-self-center self-center h-full w-[500px] flex flex-col justify-center items-center animate-pulse"
            >
              <div className="w-[50px] h-[50px]  justify-self-center text-center animate-spin spinner-border text-green-800 rounded-full"></div>
              <span>Loading...</span>

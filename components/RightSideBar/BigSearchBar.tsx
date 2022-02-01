@@ -20,7 +20,7 @@ export default function BigSearchBar({machines,handlemachinesselected,handlemach
     
 return (
   
-  <div className="sticky top-0 right-0 h-screen w-full  grid grid-rows-[repeat(10,_minmax(0,_1fr))] items-center shadow bg-white translate ease-in-out">
+  <div className=" overflow-auto sticky top-0 right-0 h-full w-full  grid grid-rows-[repeat(10,_minmax(0,_1fr))] items-center shadow bg-white translate ease-in-out">
     <div className="row-start-1 row-end-3"></div>
     <Input machines={machines} handlemachinessearched={handlemachinessearched} />
     <div className="row-start-4 row-end-5"></div>

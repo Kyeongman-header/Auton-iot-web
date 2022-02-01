@@ -10,7 +10,7 @@ export interface HandleWhatToShowProperty{
 export default function BigLeftSideBar({handlewhattoshowproperty, whattoshowproperty} :  HandleWhatToShowProperty) {
 
   return (
-    <div className="sticky top-0 left-0 h-screen overflow-scroll grid grid-cols-1 w-full justify-items-stretch border border-white">
+    <div className="sticky top-0 left-0 h-full overflow-scroll grid grid-cols-1 w-full justify-items-stretch border border-white">
 
       {ListOfWhatToShowProperty.map((whattoshow: string, index: React.Key) => (
         <div

@@ -27,8 +27,8 @@ function MyApp({ Component, pageProps }: AppProps) {
   //이는 SSR에서 해줄 일이다.
   
   return (
-    <div>
-      <div className="flex flex-col h-fit w-screen bg-black gap-px">
+    <div >
+      <div className="flex flex-col min-h-[100vh] min-w-[800pt] overflow-auto bg-black gap-px">
         <Navigation />
         <Component {...pageProps} />
         <Footer />

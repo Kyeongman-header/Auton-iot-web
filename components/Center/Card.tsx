@@ -146,52 +146,49 @@ export default function Cards({
               <ChipIcon className="ml-1 text-base h-5 w-5" />
               <p className="ml-1 text-base">{Machine.id}</p>
             </div>
-            <div className="ml-1 flex cursor-pointer justify-items-start h-5 w-5">
-              
               <div
                 title="엑셀(.xlsx) 파일 다운로드"
-                className="h-5 w-5 duration-300 hover:scale-125 cursor-pointer mr-1"
+                className="ml-1 h-5 w-5 duration-300 hover:scale-105 cursor-pointer mr-1"
                 onMouseOver={() => {
                   setdownloadiconmouseon(true);
                 }}
                 onMouseLeave={() => {
                   setdownloadiconmouseon(false);
                 }}
-                // onClick={() => {
-                //   const wb = xlsx.utils.book_new();
+                onClick={() => {
+                  const wb = xlsx.utils.book_new();
 
-                //   let arrofarr: [string[], string[]] = [
-                //     Machine.gps_dates,
-                //     Machine.gps,
-                //   ];
-                //   const newarrofarr = zip_2(arrofarr);
-                //   var ws = xlsx.utils.aoa_to_sheet(newarrofarr);
-                //   xlsx.utils.book_append_sheet(wb, ws, "gps");
+                  let arrofarr: [string[], string[]] = [
+                    Machine.gps_dates,
+                    Machine.gps,
+                  ];
+                  const newarrofarr = zip_2(arrofarr);
+                  var ws = xlsx.utils.aoa_to_sheet(newarrofarr);
+                  xlsx.utils.book_append_sheet(wb, ws, "gps");
 
-                //   Machine.drawable.map((draw, index) => {
-                //     let name = indextowords(draw.name);
-                //     let arrofarr: [string[], number[]] = [
-                //       draw.dates,
-                //       draw.values,
-                //     ];
-                //     const newarrofarr = zip(arrofarr);
-                //     var ws = xlsx.utils.aoa_to_sheet(newarrofarr);
-                //     xlsx.utils.book_append_sheet(wb, ws, name);
-                //   });
+                  Machine.drawable.map((draw, index) => {
+                    let name = indextowords(draw.name);
+                    let arrofarr: [string[], number[]] = [
+                      draw.dates,
+                      draw.values,
+                    ];
+                    const newarrofarr = zip(arrofarr);
+                    var ws = xlsx.utils.aoa_to_sheet(newarrofarr);
+                    xlsx.utils.book_append_sheet(wb, ws, name);
+                  });
 
-                //   xlsx.writeFile(
-                //     wb,
-                //     Machine.id + "_" + pub_date[0] + "_" + pub_date[1] + ".xlsx"
-                //   );
-                // }}
+                  xlsx.writeFile(
+                    wb,
+                    Machine.id + "_" + pub_date[0] + "_" + pub_date[1] + ".xlsx"
+                  );
+                }}
               >
                 {downloadiconmouseon ? (
-                  <SolidDownloadIcon className="h-fit w-fit duration-300" />
+                  <SolidDownloadIcon className="h-5 w-5 duration-300" />
                 ) : (
-                  <DownloadIcon className="h-fit w-fit duration-300" />
+                  <DownloadIcon className="h-5 w-5 duration-300" />
                 )}
               </div>
-            </div>
           </div>
         </div>
       </div>

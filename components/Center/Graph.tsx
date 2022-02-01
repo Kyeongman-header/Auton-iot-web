@@ -32,6 +32,7 @@ export default function Graph({
   const [screengraph, setscreengraph] = useState<Boolean>(false);
   const [calendariconmouseon, setcalendariconmouseon] =
     useState<boolean>(false);
+  const [secondloading,setSecondloading]=useState<boolean>(false);
 
   const [dateRange, setDateRange] = useState<[Date, Date]>([
     new Date(pub_date[0]),
@@ -102,7 +103,9 @@ useEffect(()=>{
     );
 });
 CalendarInput.displayName='Example';
-
+function sleep(ms : number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
 
   return (
     <div
@@ -144,8 +147,11 @@ CalendarInput.displayName='Example';
               onMouseLeave={() => {
                 !ismap && setMouseoncautionicon(false);
               }}
-              onClick={() => {
+              onClick={async () => {
                 !ismap && setsecond(!second);
+                !ismap && setSecondloading(true);
+                await sleep(1000);
+                !ismap && setSecondloading(false);
               }}
             >
               {second ? (
@@ -164,9 +170,12 @@ CalendarInput.displayName='Example';
                   ? " cursor-default "
                   : " hover:shadow-md cursor-pointer")
               }
-              onClick={() => {
+              onClick={async () => {
                 !ismap && setdayorhour(false);
                 !ismap && setsecond(false);
+                !ismap && setSecondloading(true);
+                await sleep(1000);
+                !ismap && setSecondloading(false);
               }}
             >
               {"\u00a0\u00a0Hour\u00a0\u00a0 "}
@@ -178,9 +187,12 @@ CalendarInput.displayName='Example';
                   ? " cursor-default "
                   : " hover:shadow-md cursor-pointer")
               }
-              onClick={() => {
+              onClick={async() => {
                 !ismap && setdayorhour(true);
                 !ismap && setsecond(false);
+                !ismap && setSecondloading(true);
+                await sleep(1000);
+                !ismap && setSecondloading(false);
               }}
             >
               {"\u00a0\u00a0Day\u00a0\u00a0 "}
@@ -198,8 +210,8 @@ CalendarInput.displayName='Example';
             !ismap && setscreengraph(!screengraph);
           }}
         >
-          {loading ? (
-            <div className="justify-self-center self-center h-screen w-[500px] flex flex-col justify-center items-center animate-pulse">
+          {loading || secondloading ? (
+            <div className="justify-self-center self-center h-full w-[500px] flex flex-col justify-center items-center animate-pulse">
               <div className="w-[50px] h-[50px]  justify-self-center text-center animate-spin spinner-border text-green-800 rounded-full"></div>
               <span>Loading...</span>
             </div>

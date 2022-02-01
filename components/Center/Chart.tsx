@@ -214,7 +214,7 @@ const MyResponsiveLine = ({ second, data,linearorpoint } : any) => {
         enablePoints={second? false:true}
         enableGridX={second? false: true}
         //enableGridY={second? false: true}
-        axisBottom={{
+        axisBottom={second? null:{
             tickSize: 5,
             tickPadding: 5,
             tickRotation: -68,
@@ -276,13 +276,27 @@ export default function Chart({datesandvalue,dayorhour,zero,second} : ChartPrope
 
     useEffect(()=>{
       (zero || data.length===0) ? setNothingToShow(true) : setNothingToShow(false);
-      
+
     //console.log(data);
     },);
-
     return (
       <>
-        {nothingtoshow ? (<div className="flex flex-col justify-center items-center" ><EmojiSadIcon className="w-10 h-10"/><p className="text-center text-sm">데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를 새롭게 지정하세요.</p></div>) : <MyResponsiveLine second={second} data={data} linearorpoint={second ? "linear" : "point"}/>}
-        </>
+        {nothingtoshow ? (
+          <div className="flex flex-col justify-center items-center">
+            <EmojiSadIcon className="w-10 h-10" />
+            <p className="text-center text-sm">
+              데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를
+              새롭게 지정하세요.
+            </p>
+          </div>
+        ) : (
+          <MyResponsiveLine
+            second={second}
+            data={data}
+            linearorpoint={second ? "linear" : "point"}
+          />
+        )
+        }
+      </>
     );
 }

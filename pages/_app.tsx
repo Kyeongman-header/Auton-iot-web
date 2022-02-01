@@ -28,7 +28,7 @@ function MyApp({ Component, pageProps }: AppProps) {
   
   return (
     <div >
-      <div className="flex flex-col min-h-[100vh] min-w-[800pt] overflow-auto bg-black gap-px">
+      <div className="flex flex-col min-h-[100vh] min-w-[800pt] bg-black gap-px">
         <Navigation />
         <Component {...pageProps} />
         <Footer />

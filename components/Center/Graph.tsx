@@ -32,7 +32,7 @@ export default function Graph({
   const [screengraph, setscreengraph] = useState<Boolean>(false);
   const [calendariconmouseon, setcalendariconmouseon] =
     useState<boolean>(false);
-  const [secondloading,setSecondloading]=useState<boolean>(false);
+ 
 
   const [dateRange, setDateRange] = useState<[Date, Date]>([
     new Date(pub_date[0]),
@@ -61,11 +61,25 @@ export default function Graph({
   const doh=pub_date[0] && pub_date[1] && new Date(pub_date[1]).getDate()-new Date(pub_date[0]).getDate() >6 ? true : false;
   const [dayorhour, setdayorhour]=useState<boolean>(doh);
   const [second, setsecond] = useState<boolean>(false);
+  const [isportrait,setisportrait]=useState<boolean>(false);
   const [mouseoncautionicon, setMouseoncautionicon]=useState<boolean>(false);
+  const [secondloading,setSecondloading]=useState<boolean>(false);
+
   const resizeHandler=async()=>{
-    setSecondloading(true);
-    await sleep(500);
-    setSecondloading(false);
+    if (window.innerWidth <= window.innerHeight && !isportrait) {
+      // Portrait 모드일 때 실행할 스크립트
+      setisportrait(true);
+      setSecondloading(true);
+      await sleep(500);
+      setSecondloading(false);
+
+    } else if(window.innerWidth >= window.innerHeight && isportrait) {
+      // Landscape 모드일 때 실행할 스크립트
+      setisportrait(false);
+      setSecondloading(true);
+      await sleep(500);
+      setSecondloading(false);
+    }
   }
   useEffect(() => {
     //as EventListener를 주의할 것.

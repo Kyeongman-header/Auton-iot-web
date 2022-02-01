@@ -476,7 +476,7 @@ if(lestids.length===0 && y===false)
           setExpandLeftSideBar(true);
         }}
         className={
-          "grow-0 w-20 transition-all ease-in-out duration-300 " +
+          "grow-0 w-20 transition-all ease-in-out duration-300 h-screen sticky top-0 left-0" +
           (ExpandLeftSideBar ? " w-[25rem]" : "")
         }
       >
@@ -505,7 +505,7 @@ if(lestids.length===0 && y===false)
       <div
         ref={refright}
         className={
-          "grow-0  w-20 transition-all ease-in-out duration-300" +
+          "grow-0  w-20 transition-all ease-in-out duration-300 h-screen sticky top-0 right-0 " +
           (ExpandRightSideBar ? " w-[25rem]" : "")
         }
         onClick={() => {

@@ -136,7 +136,7 @@ function sleep(ms : number) {
     <div
     title="클릭하여 확대하기"
       className={
-        " rounded-lg w-full justify-self-stretch bg-slate-300 row-start-2 row-end-6 col-start-3 col-end-9  transition ease-in-out overflow-auto " //이거 md랑 sm 속성이 먹히려면 sm 속성을 sm안붙이고 지정한 다음 md 속성에 원하는 걸 넣어야 하나보다.
+        "min-w-[500px] rounded-lg w-full justify-self-stretch bg-slate-300 row-start-2 row-end-6 col-start-3 col-end-9  transition ease-in-out overflow-auto " //이거 md랑 sm 속성이 먹히려면 sm 속성을 sm안붙이고 지정한 다음 md 속성에 원하는 걸 넣어야 하나보다.
       +(screengraph ? " overflow-visible " : " overflow-y-auto ")}
     >
       <div className="flex flex-col h-full">

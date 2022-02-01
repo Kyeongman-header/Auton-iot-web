@@ -146,7 +146,7 @@ export default function Cards({
               <ChipIcon className="ml-1 text-base h-5 w-5" />
               <p className="ml-1 text-base">{Machine.id}</p>
             </div>
-            <div className="flex cursor-pointer justify-items-start">
+            <div className="ml-1 flex cursor-pointer justify-items-start h-5 w-5">
               
               <div
                 title="엑셀(.xlsx) 파일 다운로드"

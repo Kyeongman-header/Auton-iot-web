@@ -5,6 +5,7 @@ import { X448KeyPairKeyObjectOptions } from "crypto";
 import { WhatToShowProperty } from "../Types/TypesWhatToShowProperty";
 import {EmojiSadIcon} from "@heroicons/react/outline";
 import * as d3 from 'd3';
+import { EmojiHappyIcon } from "@heroicons/react/outline";
 
 export interface ChartProperty{
     datesandvalue :datesandvalue[],
@@ -282,7 +283,7 @@ export default function Chart({datesandvalue,dayorhour,zero,second} : ChartPrope
       <>
         {nothingtoshow ? (
           <div className="flex flex-col justify-center items-center h-full content-center">
-            <EmojiSadIcon className="w-10 h-10" />
+            <EmojiHappyIcon className="w-10 h-10" />
             <p className="text-center text-sm">
               데이터가 존재하지 않습니다. 그래프 속성을 추가하시거나, 날짜를
               새롭게 지정하세요.

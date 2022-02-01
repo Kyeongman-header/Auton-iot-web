@@ -36,6 +36,7 @@ import convertDateToString from '../components/convertDateToString';
 import convertDateFormatString from '../components/ConvertDateFormatString';
 import { addGpsSlices, removeGpsSlices } from '../redux/forgps_slices';
 import gpstomapgps from '../components/gpstomapgps';
+import { EmojiSadIcon } from '@heroicons/react/outline';
 
 
 const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsType<typeof getStaticProps>) => {
@@ -43,7 +44,7 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
   
   //const machines = useSelector((state: RootState) => state.machines.Machines);
   //const token = useSelector((state: RootState) => state.token.token);
-
+  const [isiphonemobile,setisiphonemobile]=useState<boolean>(false);
 
   const forgps = useSelector((state: RootState) => state.forgps.OneGpsStates);
   const dispatch=useDispatch();
@@ -120,7 +121,22 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       };
   }, [refleft,refright]);
   useEffect(() => {
-    getselectedmachinedata(initialselectedids);
+    function isMobile() {
+      var user = navigator.userAgent;
+      var is_mobile = false;
+      if (
+        user.indexOf("iPhone") > -1 ||
+        user.indexOf("iPad") > -1 ||
+        user.indexOf("iPod") > -1
+      ) {
+        is_mobile = true;
+      }
+
+      console.log(is_mobile);
+      return is_mobile;
+    }
+    setisiphonemobile(isMobile());
+  !isiphonemobile&& getselectedmachinedata(initialselectedids);
   },[]); 
   useEffect(() => {
     selectedids.length === 0 ?
@@ -326,8 +342,6 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
       catch(e){
         console.log("backend error.");
       }
-      
-      
 };
 
 
@@ -440,7 +454,13 @@ if(lestids.length===0 && y===false)
     setmachines(temp_machine);
     //모든 머신들을 searched = true로 초기화한다.
   }
-  return (
+
+   return isiphonemobile ? ( <div className="flex flex-col justify-center items-center h-screen content-center bg-white">
+   <EmojiSadIcon className="w-10 h-10" />
+   <p className="text-center text-lg text-slate-800">
+     죄송합니다. 아이폰 Safari 브라우저는 현재 지원하지 않습니다. 모바일 혹은 데스크탑 Chrome으로 접속해 주세요.
+   </p>
+ </div>):(
     // flex를 사용할 거면 flex가 className에 먼저 선언이 되어있어야 함.
     //  w-full 이든 w-2/3 이든 뭐든 백분율로 되어있는 크기 설정은 반드시 상위 컴포넌트가 고정된 크기가 있어야 한다. 혹은 비율 크기라면 그 상위상위 컴포넌트가 고정 크기가 있어야 한다.
     // 백분율 크기는 상위 컴포넌트에 '대한'크기이다. 따라서 hover로 상위 컴포넌트가 크기가 변하면 하위 컴포넌트는 w-full로 고정해서 써놓으면 된다.
@@ -515,6 +535,9 @@ export default Home;
 export const getStaticProps :GetStaticProps=async(context)=> {
   let tempMachines : Machine[] = [] as Machine[];
   let selectedids: string[] =[];
+  
+
+
   
   try{
     const machine_list = await fetch( `https://auton-iot.com/api/machine/`,

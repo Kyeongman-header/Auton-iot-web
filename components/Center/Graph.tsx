@@ -62,7 +62,18 @@ export default function Graph({
   const [dayorhour, setdayorhour]=useState<boolean>(doh);
   const [second, setsecond] = useState<boolean>(false);
   const [mouseoncautionicon, setMouseoncautionicon]=useState<boolean>(false);
-
+  const resizeHandler=async()=>{
+    setSecondloading(true);
+    await sleep(500);
+    setSecondloading(false);
+  }
+  useEffect(() => {
+    //as EventListener를 주의할 것.
+    window.addEventListener('resize',resizeHandler );
+    return () => {
+        window.removeEventListener('resize',resizeHandler);
+    };
+}, []);
 
 useEffect(()=>{
     // console.log(id);
@@ -128,7 +139,6 @@ function sleep(ms : number) {
               customInput={<CalendarInput />}
               onChange={(update: any) => {
                 setDateRange(update);
-                update[0] && update[1] && console.log("onChange");
 
                 update[0] && update[1] && handlepub_date(update[0], update[1]);
               }}
@@ -205,11 +215,11 @@ function sleep(ms : number) {
         {/* 저기서 grid가 아니라 flex로 하면, google map이 아예 안 그려지는 사건이 발생하니 주의!!! flex는 자체적인 width가 없음!!*/}
         <div
           className={
-            "grow grid grid-cols-1 bg-white rounded-lg cursor-pointer duration-300 border justify-content-center min-w-[30rem] max-h-full" +
+            "md:max-h-full grow grid grid-cols-1 bg-white rounded-lg cursor-pointer duration-300 border justify-content-center min-w-[30rem] max-h-full" +
             (screengraph
               ? " scale-150 sm:shadow-all_height md:shadow-all_width z-[100]"
               : !ismap
-              ? " "//" hover:drop-shadow-lg hover:scale-95"
+              ? "  "//" hover:drop-shadow-lg hover:scale-95"
               : " ")
           }
           onClick={() => {

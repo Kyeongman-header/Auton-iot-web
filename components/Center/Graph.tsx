@@ -61,26 +61,27 @@ export default function Graph({
   const doh=pub_date[0] && pub_date[1] && new Date(pub_date[1]).getDate()-new Date(pub_date[0]).getDate() >6 ? true : false;
   const [dayorhour, setdayorhour]=useState<boolean>(doh);
   const [second, setsecond] = useState<boolean>(false);
-  const [isportrait,setisportrait]=useState<boolean>(false);
+  const [nothingtoshow, setNothingToShow] =useState<boolean>(true);
+  
   const [mouseoncautionicon, setMouseoncautionicon]=useState<boolean>(false);
   const [secondloading,setSecondloading]=useState<boolean>(false);
+  //const [isportrait,setisportrait]=useState<boolean>(false);
+  // const resizeHandler=async()=>{
+  //   if (window.innerWidth <= window.innerHeight && !isportrait) {
+  //     // Portrait 모드일 때 실행할 스크립트
+  //     setisportrait(true);
+  //     setSecondloading(true);
+  //     await sleep(500);
+  //     setSecondloading(false);
 
-  const resizeHandler=async()=>{
-    if (window.innerWidth <= window.innerHeight && !isportrait) {
-      // Portrait 모드일 때 실행할 스크립트
-      setisportrait(true);
-      setSecondloading(true);
-      await sleep(500);
-      setSecondloading(false);
-
-    } else if(window.innerWidth >= window.innerHeight && isportrait) {
-      // Landscape 모드일 때 실행할 스크립트
-      setisportrait(false);
-      setSecondloading(true);
-      await sleep(500);
-      setSecondloading(false);
-    }
-  }
+  //   } else if(window.innerWidth >= window.innerHeight && isportrait) {
+  //     // Landscape 모드일 때 실행할 스크립트
+  //     setisportrait(false);
+  //     setSecondloading(true);
+  //     await sleep(500);
+  //     setSecondloading(false);
+  //   }
+  // }
 //   useEffect(() => {
 //     //as EventListener를 주의할 것.
 //좋은 시도이긴 했는데 해보니 모바일에서 너무 자주 loading이 된다.
@@ -98,6 +99,7 @@ useEffect(()=>{
     // console.log(id +" " +endDate);
     setDateRange([new Date(pub_date[0]),new Date(pub_date[1])]);
 },[loading])
+
  
 
   const CalendarInput = forwardRef<HTMLButtonElement,ButtonProps>((props: React.DetailedHTMLProps<ButtonHTMLAttributes<HTMLButtonElement>, HTMLButtonElement>, ref: React.Ref<HTMLButtonElement>)=> {
@@ -105,7 +107,7 @@ useEffect(()=>{
       <button
         ref={ref}
         title="날짜 선택하기"
-        className="h-5 w-60 mr-1 duration-300 hover:scale-105"
+        className={"h-10 w-60 mr-1 duration-300 hover:scale-105 " + (nothingtoshow ? " animate-bounce hover:animate-none " : " animate-none ")}
         onMouseOver={() => {
           setcalendariconmouseon(true);
         }}
@@ -114,12 +116,12 @@ useEffect(()=>{
         }}
         onClick={props.onClick}
       >
-        <div className="flex">
+        <div className="flex content-center justfiy-center items-center">
           {!calendariconmouseon ? (
-            <CalendarIcon className="w-5 h-5" />
+            <CalendarIcon className="w-10 h-10" />
           ) : (
             <>
-              <SolidCalendarIcon className="w-5 h-5" />
+              <SolidCalendarIcon className="w-10 h-10" />
               
             </>
           )}
@@ -182,7 +184,7 @@ function sleep(ms : number) {
                 !ismap && setSecondloading(false);
               }}
             >
-              {second ? (
+              {mouseoncautionicon ? (
                 <SolidExclamationIcon className="w-5 h-5" />
               ) : (
                 <ExclamationIcon className="w-5 h-5" />
@@ -250,6 +252,8 @@ function sleep(ms : number) {
             <Map onegpsstate={onegpsstate} datesandvalue={datesandvalue} />
           ) : (
             <Chart
+            nothingtoshow={nothingtoshow}
+            handlesetNothingToShow={(y:boolean)=>{setNothingToShow(y)}}
               zero={zero}
               datesandvalue={datesandvalue}
               dayorhour={dayorhour}

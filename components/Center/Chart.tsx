@@ -12,6 +12,8 @@ export interface ChartProperty{
     dayorhour : boolean,
     zero : boolean,
     second: boolean,
+    nothingtoshow : boolean,
+    handlesetNothingToShow : (y:boolean)=>void
 }
 
 interface XY{
@@ -266,16 +268,16 @@ const MyResponsiveLine = ({ second, data,linearorpoint } : any) => {
       }
 
 //dayorhour -> false가 기본값, 시간 데이터.
-export default function Chart({datesandvalue,dayorhour,zero,second} : ChartProperty)
+export default function Chart({datesandvalue,dayorhour,zero,second,nothingtoshow,handlesetNothingToShow} : ChartProperty)
 {
-    const [nothingtoshow, setNothingToShow] =useState<boolean>(true);
+    
     const [data, setData]=useState<chartform[]>([]);
     useEffect(()=>{
       setData(zero ? [] : convertdata(datesandvalue,dayorhour,second));
     },[datesandvalue,dayorhour]);
 
     useEffect(()=>{
-      (zero || data.length===0) ? setNothingToShow(true) : setNothingToShow(false);
+      (zero || data.length===0) ? handlesetNothingToShow(true) : handlesetNothingToShow(false);
 
     //console.log(data);
     },);

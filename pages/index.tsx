@@ -85,9 +85,9 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
     
     
     const today=new Date();
-    const yesterday=addDays(today,-1);
+    const tomorrow=addDays(today,1);
 
-    const default_pub_date=convertDateToString(yesterday,today);
+    const default_pub_date=convertDateToString(today,tomorrow);
 
 
 

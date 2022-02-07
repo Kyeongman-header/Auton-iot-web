@@ -7,10 +7,11 @@ import {wrapper} from "../redux/store";
 
 import Footer from '../components/footer';
 import Navigation from '../components/nav';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 // import { settoken } from '../redux/token_slices';
 import { getmachinelists_fromapiserver } from "../redux/machine_slices";
+import Login from "./login";
 //상단의 nav bar와 footer 가져옴.(global ui.)
 
 
@@ -25,12 +26,15 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   //dispatch(getmachinelists_fromapiserver())
   //이는 SSR에서 해줄 일이다.
-  
+  const [login,setlogin]=useState<boolean>(false);
+  const handlelogin=(islogin : boolean)=>{
+    setlogin(islogin);
+  }
   return (
     <div >
       <div className="flex flex-col min-h-[100vh] min-w-[800pt] bg-black gap-px">
         <Navigation />
-        <Component {...pageProps} />
+        {login ? <Component {...pageProps} /> : <Login login={login} handlelogin={handlelogin}/> }
         <Footer />
       </div>
     </div>

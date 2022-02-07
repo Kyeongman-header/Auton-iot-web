@@ -9,6 +9,14 @@ module.exports = {
         'all_height': '0 0 0 100vh rgba(0, 0, 0, 0.5)',
       },
        keyframes: {
+        wiggle: {
+          '0%, 100%': {
+              transform: 'rotate(-3deg)'
+          },
+          '50%': {
+              transform: 'rotate(3deg)'
+          },
+      },
         'fade-in-down': {
             '0%': {
                 opacity: '0',
@@ -33,6 +41,7 @@ module.exports = {
     animation: {
         'fade-in-down': 'fade-in-down 0.3s ease-out',
         'fade-out-down': 'fade-out-down 0.3s ease-out',
+        'wiggle' : 'wiggle 1s ease-in-out',
     }
     },
   },

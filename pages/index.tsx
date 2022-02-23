@@ -255,6 +255,8 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
           newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].values.push(tempdata.sensor['P.M 2.5']);
           // newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(tempdata.pub_date);
           newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25")].dates.push(dates)
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].values.push(tempdata.sensor['P.M 2.5_2']);
+          newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(dates)
       });
       
     
@@ -270,9 +272,9 @@ const Home: NextPage = ({machine_list, initialselectedids}:InferGetStaticPropsTy
             newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].values.push(tempdata.airkorea.khai);
             //newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(tempdata.pub_date);
             newmachine.drawable[ListOfWhatToShowProperty.indexOf("KHAI")].dates.push(dates)
-            newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].values.push(tempdata.airkorea['P.M 2.5']);
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_AIRKOREA")].values.push(tempdata.airkorea['P.M 2.5']);
             //newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(tempdata.pub_date);
-            newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_2")].dates.push(dates)
+            newmachine.drawable[ListOfWhatToShowProperty.indexOf("PM25_AIRKOREA")].dates.push(dates)
             newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].values.push(tempdata.airkorea.CO);
             //newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(tempdata.pub_date);
             newmachine.drawable[ListOfWhatToShowProperty.indexOf("CO")].dates.push(dates)
